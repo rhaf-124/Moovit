@@ -47,6 +47,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Misplaced Windows npm-cache directory
-C:\Users\Rahina\AppData\Roaming\npm-cache/
+# Misplaced directories / IDE noise
 .claude/
+.metadata
+.vscode/
+# Wildcard to catch any Windows absolute path that ends up here
+C:*/
