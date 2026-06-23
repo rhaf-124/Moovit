@@ -1,6 +1,9 @@
 import 'dart:async';
 
+// ignore: depend_on_referenced_packages
+import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
@@ -14,7 +17,6 @@ import 'core/router/app_router.dart';
 import 'core/router/deep_link_manager.dart';
 import 'core/storage/token_storage.dart';
 import 'core/theme/theme.dart';
-import 'core/theme/theme_cubit.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
@@ -61,7 +63,9 @@ void main() async {
   final reviewRepository = ReviewRepositoryImpl(reviewRemoteDataSource);
 
   runApp(
-    MultiRepositoryProvider(
+    DevicePreview(
+      enabled: !kReleaseMode,
+      builder: (_) => MultiRepositoryProvider(
       providers: [
         RepositoryProvider<AuthRepository>.value(value: authRepository),
         RepositoryProvider<TripRepository>.value(value: tripRepository),
@@ -79,6 +83,7 @@ void main() async {
         ],
         child: const MoovitApp(),
       ),
+    ),
     ),
   );
 }
@@ -156,7 +161,11 @@ class _MoovitAppState extends State<MoovitApp> {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             routerConfig: appRouter,
-            builder: (context, child) => _ConnectivityOverlay(child: child!),
+            locale: DevicePreview.locale(context),
+            builder: (context, child) => DevicePreview.appBuilder(
+              context,
+              _ConnectivityOverlay(child: child!),
+            ),
           );
         },
       ),

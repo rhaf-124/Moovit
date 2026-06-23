@@ -121,7 +121,7 @@ class _DriverTicketsPageState extends State<DriverTicketsPage> {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         itemCount: 3,
-        itemBuilder: (_, __) => Padding(
+        itemBuilder: (_, _) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Container(
             decoration: BoxDecoration(
@@ -176,7 +176,6 @@ class _DriverTicketsPageState extends State<DriverTicketsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF080F1E) : const Color(0xFFF3F4F6),
@@ -299,7 +298,7 @@ class _DriverTicketsPageState extends State<DriverTicketsPage> {
                 child: Image.network(
                   _resolveImageUrl(trip.busImageUrl!),
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: Colors.indigo.shade50,
                     child: const Icon(Icons.directions_bus_rounded,
                         color: Colors.indigo, size: 40),

@@ -510,7 +510,11 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
                 .join()
             : '?';
 
-        return Scaffold(
+        final isLoggingOut = authState is AuthLoggingOut;
+
+        return Stack(
+          children: [
+        Scaffold(
           backgroundColor:
               isDark ? const Color(0xFF080F1E) : const Color(0xFFF3F4F6),
           appBar: AppBar(
@@ -682,19 +686,19 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
                     },
                   ),
                 ),
-                _MenuItem(
-                  icon: Icons.notifications_none_rounded,
-                  label: 'Notifications',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content:
-                            Text('Notification settings coming soon'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                ),
+                // _MenuItem(
+                //   icon: Icons.notifications_none_rounded,
+                //   label: 'Notifications',
+                //   onTap: () {
+                //     ScaffoldMessenger.of(context).showSnackBar(
+                //       const SnackBar(
+                //         content:
+                //             Text('Notification settings coming soon'),
+                //         behavior: SnackBarBehavior.floating,
+                //       ),
+                //     );
+                //   },
+                // ),
               ], tt),
               const SizedBox(height: 20),
 
@@ -732,7 +736,38 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
               ], tt),
             ],
           ),
-        );
+        ),
+        if (isLoggingOut)
+          Container(
+            color: Colors.black54,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Signing out...',
+                      style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Please wait a moment',
+                      style: tt.bodySmall?.copyWith(color: AppColors.grey500),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
       },
     );
   }

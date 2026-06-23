@@ -156,7 +156,7 @@ class _ComplaintsTab extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, i) => _ComplaintCard(complaint: items[i]),
     );
   }
@@ -206,7 +206,7 @@ class _ComplaintCard extends StatelessWidget {
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha:0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -227,7 +227,7 @@ class _ComplaintCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.12),
+                color: statusColor.withValues(alpha:0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -332,7 +332,7 @@ class _RatingsTab extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, i) => _RatingCard(rating: items[i]),
     );
   }
@@ -371,7 +371,7 @@ class _RatingCard extends StatelessWidget {
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha:0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -516,8 +516,8 @@ class _ShimmerList extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         itemCount: 4,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, __) => Container(
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (_, _) => Container(
           height: 110,
           decoration: BoxDecoration(
             color: Colors.white,
@@ -594,7 +594,7 @@ class _ErrorView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha:0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.error_outline_rounded,

@@ -53,9 +53,9 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
-    for (final f in _rawFocusNodes) f.dispose();
+    for (final c in _controllers) { c.dispose(); }
+    for (final f in _focusNodes) { f.dispose(); }
+    for (final f in _rawFocusNodes) { f.dispose(); }
     super.dispose();
   }
 
@@ -88,7 +88,7 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      for (final c in _controllers) c.clear();
+      for (final c in _controllers) { c.clear(); }
       FocusScope.of(context).requestFocus(_focusNodes[0]);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -129,10 +129,10 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
     return SizedBox(
       width: 48,
       height: 64,
-      child: RawKeyboardListener(
+      child: KeyboardListener(
         focusNode: _rawFocusNodes[index],
-        onKey: (event) {
-          if (event is RawKeyDownEvent &&
+        onKeyEvent: (event) {
+          if (event is KeyDownEvent &&
               event.logicalKey == LogicalKeyboardKey.backspace) {
             if (_controllers[index].text.isEmpty && index > 0) {
               _controllers[index - 1].clear();
@@ -300,7 +300,9 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
               const SizedBox(height: 12),
               TextButton.icon(
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   final clipboard = await Clipboard.getData('text/plain');
+                  if (!mounted) return;
                   final text = clipboard?.text?.trim() ?? '';
                   if (text.length == 6 && int.tryParse(text) != null) {
                     final digits = text.split('');
@@ -309,8 +311,7 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
                     }
                     _verify();
                   } else {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text('No valid 6-digit code in clipboard'),
                       ),

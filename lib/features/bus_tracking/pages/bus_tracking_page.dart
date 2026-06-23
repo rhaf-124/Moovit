@@ -170,7 +170,7 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
               margin: const EdgeInsets.only(right: 12),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: _statusColor(loc.status).withOpacity(0.12),
+                color: _statusColor(loc.status).withValues(alpha:0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -242,7 +242,7 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
               Polyline(
                 points: [busPos, destPos],
                 strokeWidth: 3.5,
-                color: AppColors.primary.withOpacity(0.8),
+                color: AppColors.primary.withValues(alpha:0.8),
               ),
             ],
           ),
@@ -259,7 +259,7 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
+                        color: AppColors.primary.withValues(alpha:0.4),
                         blurRadius: 8,
                         spreadRadius: 2,
                       )
@@ -298,9 +298,9 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.deepOrange.withOpacity(0.1),
+                color: Colors.deepOrange.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.deepOrange.withOpacity(0.3)),
+                border: Border.all(color: Colors.deepOrange.withValues(alpha:0.3)),
               ),
               child: Row(children: [
                 const Icon(Icons.pause_circle_outline_rounded,

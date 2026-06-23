@@ -72,7 +72,7 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
                   color: cs.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: cs.primary.withOpacity(0.3),
+                    BoxShadow(color: cs.primary.withValues(alpha: 0.3),
                         blurRadius: 24, offset: const Offset(0, 8))
                   ],
                 ),
@@ -89,7 +89,7 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
               const SizedBox(height: 32),
               AnimatedBuilder(
                 animation: _progress,
-                builder: (_, __) => Column(children: [
+                builder: (_, _) => Column(children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(

@@ -167,7 +167,7 @@ class _SubmitDriverReportPageState extends State<SubmitDriverReportPage> {
             Text('Subject', style: tt.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              value: _subject,
+              initialValue: _subject,
               decoration: InputDecoration(
                 hintText: 'Select issue type',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

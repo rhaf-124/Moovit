@@ -147,7 +147,7 @@ class _SubmitRatingPageState extends State<SubmitRatingPage> {
                     ? []
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha:0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -160,7 +160,7 @@ class _SubmitRatingPageState extends State<SubmitRatingPage> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withOpacity(0.12),
+                        color: const Color(0xFFF59E0B).withValues(alpha:0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.star_rounded,

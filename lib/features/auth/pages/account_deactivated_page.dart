@@ -44,7 +44,7 @@ class AccountDeactivatedPage extends StatelessWidget {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.1),
+                  color: AppColors.error.withValues(alpha:0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -87,7 +87,7 @@ class AccountDeactivatedPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 14),
                   decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest.withOpacity(0.6),
+                    color: cs.surfaceContainerHighest.withValues(alpha:0.6),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDark

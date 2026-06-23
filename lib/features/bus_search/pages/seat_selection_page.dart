@@ -23,11 +23,17 @@ class _SeatCell {
   String luggageType;
   String passengerName;
   String contactNumber;
+  // ignore: unused_element_parameter
   _SeatCell(this.id, this.number, this.display,
+      // ignore: unused_element_parameter
       [this.gender,
+      // ignore: unused_element_parameter
       this.hasLuggage = false,
+      // ignore: unused_element_parameter
       this.luggageType = 'none',
+      // ignore: unused_element_parameter
       this.passengerName = '',
+      // ignore: unused_element_parameter
       this.contactNumber = '']);
 }
 
@@ -295,8 +301,8 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: isWarning
-                      ? AppColors.error.withOpacity(0.15)
-                      : cs.primary.withOpacity(0.12),
+                      ? AppColors.error.withValues(alpha:0.15)
+                      : cs.primary.withValues(alpha:0.12),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                       color: isWarning ? AppColors.error : cs.primary),
@@ -393,7 +399,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
 
   Widget _buildShimmer(bool isDark) {
     final base = isDark ? AppColors.grey800 : const Color(0xFFE5E7EB);
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(children: [
         Container(
@@ -420,6 +426,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
   String _resolveImageUrl(String raw) {
     final uri = Uri.tryParse(raw);
     if (uri == null) return raw;
+    if (uri.isAbsolute) return raw;
     final base = ApiConstants.baseUrl.replaceAll(RegExp(r'/$'), '');
     return '$base${uri.path}';
   }
@@ -448,7 +455,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
             child: _bus.imageUrl != null && _bus.imageUrl!.isNotEmpty
                 ? Image.network(_resolveImageUrl(_bus.imageUrl!),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildFallbackBusImage(isDark))
+                    errorBuilder: (_, _, _) => _buildFallbackBusImage(isDark))
                 : _buildFallbackBusImage(isDark),
           ),
         ),
@@ -488,7 +495,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: _isFamilyPackage
-            ? activeBorder.withOpacity(0.08)
+            ? activeBorder.withValues(alpha:0.08)
             : card,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -500,7 +507,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: activeBorder.withOpacity(0.12),
+            color: activeBorder.withValues(alpha:0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(Icons.family_restroom_rounded,
@@ -522,7 +529,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
         )),
         Switch(
           value: _isFamilyPackage,
-          activeColor: activeBorder,
+          activeThumbColor: activeBorder,
           onChanged: (val) {
             setState(() {
               _isFamilyPackage = val;
@@ -579,7 +586,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
         height: 36,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-            color: cs.primary.withOpacity(0.12),
+            color: cs.primary.withValues(alpha:0.12),
             borderRadius: BorderRadius.circular(8)),
         alignment: Alignment.center,
         child: Row(children: [
@@ -647,7 +654,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
                     color: isDark ? AppColors.darkOutline : AppColors.grey300)
                 : null,
             boxShadow: seat.display == _SeatDisplay.selected
-                ? [BoxShadow(color: cs.primary.withOpacity(0.3), blurRadius: 8)]
+                ? [BoxShadow(color: cs.primary.withValues(alpha:0.3), blurRadius: 8)]
                 : null,
           ),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -707,7 +714,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
         border: Border(top: BorderSide(color: border)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha:0.08),
               blurRadius: 12,
               offset: const Offset(0, -4))
         ],
@@ -717,7 +724,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.1),
+              color: AppColors.success.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(10)),
           child: Row(children: [
             const Icon(Icons.check_circle_rounded,
@@ -941,7 +948,7 @@ class _SeatDetailsSheetState extends State<_SeatDetailsSheet> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? color.withOpacity(0.1)
+                            ? color.withValues(alpha:0.1)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
@@ -1021,7 +1028,7 @@ class _SeatDetailsSheetState extends State<_SeatDetailsSheet> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+            color: isSelected ? AppColors.primary.withValues(alpha:0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: isSelected ? AppColors.primary : border,

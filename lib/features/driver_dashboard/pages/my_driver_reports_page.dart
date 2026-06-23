@@ -76,7 +76,7 @@ class _MyDriverReportsPageState extends State<MyDriverReportsPage> {
                       child: ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                         itemCount: _reports.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (_, i) => _ReportCard(
                           report: _reports[i],
                           isDark: isDark,
@@ -91,8 +91,8 @@ class _MyDriverReportsPageState extends State<MyDriverReportsPage> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: 5,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, __) => Container(
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, _) => Container(
         height: 90,
         decoration: BoxDecoration(
           color: isDark ? AppColors.grey800 : AppColors.grey200,

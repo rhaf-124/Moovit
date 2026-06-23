@@ -104,7 +104,7 @@ class _PaystackWebviewPageState extends State<PaystackWebviewPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
-      onPopInvoked: (_) => _triggerVerification(),
+      onPopInvokedWithResult: (_, result) => _triggerVerification(),
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -120,7 +120,7 @@ class _PaystackWebviewPageState extends State<PaystackWebviewPage> {
               margin: const EdgeInsets.only(right: 16),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.12),
+                  color: AppColors.success.withValues(alpha:0.12),
                   borderRadius: BorderRadius.circular(20)),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(Icons.lock_rounded,
@@ -205,7 +205,7 @@ class _ConflictSheet extends StatelessWidget {
         Container(
           width: 72, height: 72,
           decoration: BoxDecoration(
-              color: AppColors.error.withOpacity(0.12),
+              color: AppColors.error.withValues(alpha:0.12),
               shape: BoxShape.circle),
           child: const Icon(Icons.error_outline_rounded,
               color: AppColors.error, size: 40),

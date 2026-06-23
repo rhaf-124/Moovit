@@ -322,7 +322,7 @@ class _ErrorBody extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.error.withOpacity(0.1), shape: BoxShape.circle),
+              color: AppColors.error.withValues(alpha:0.1), shape: BoxShape.circle),
             child: const Icon(Icons.error_outline_rounded,
                 color: AppColors.error, size: 40),
           ),
@@ -410,12 +410,6 @@ class _DetailsBody extends StatelessWidget {
     return '${d.day} ${months[d.month - 1]} ${d.year}  $h:$m';
   }
 
-  String _fmtTime(DateTime d) =>
-      '${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}';
-
-  String _cap(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
-
   @override
   Widget build(BuildContext context) {
     final border = isDark ? AppColors.darkOutline : AppColors.lightOutline;
@@ -432,7 +426,7 @@ class _DetailsBody extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _statusColor.withOpacity(0.12),
+              color: _statusColor.withValues(alpha:0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(_statusIcon, color: _statusColor, size: 28),
@@ -580,7 +574,7 @@ class _DetailsBody extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.12),
+                    color: AppColors.success.withValues(alpha:0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.qr_code_scanner_rounded,
@@ -771,7 +765,7 @@ class _QrCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.success.withOpacity(0.4), width: 1.5),
+        border: Border.all(color: AppColors.success.withValues(alpha:0.4), width: 1.5),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(children: [
@@ -789,7 +783,7 @@ class _QrCard extends StatelessWidget {
               color: Colors.white, borderRadius: BorderRadius.circular(12)),
           child: Image.memory(imageBytes, width: 200, height: 200,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const SizedBox(
+              errorBuilder: (_, _, _) => const SizedBox(
                 width: 200, height: 200,
                 child: Center(child: Icon(Icons.qr_code_rounded,
                     size: 80, color: AppColors.grey400)),
@@ -831,7 +825,7 @@ class _SeatRow extends StatelessWidget {
           width: 44,
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: cs.primary.withOpacity(0.1),
+            color: cs.primary.withValues(alpha:0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(children: [
@@ -910,7 +904,7 @@ class _Card extends StatelessWidget {
         boxShadow: isDark
             ? []
             : [BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha:0.04),
                 blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: child,
@@ -961,7 +955,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+        color: color.withValues(alpha:0.1), borderRadius: BorderRadius.circular(20)),
       child: Text(label,
           style: tt.labelSmall
               ?.copyWith(color: color, fontWeight: FontWeight.w700)),

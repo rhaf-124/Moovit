@@ -58,7 +58,6 @@ class _SignUpPageState extends State<SignUpPage>
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoadingEmail = false;
-  bool _isLoadingPhone = false;
   bool _isLoadingGoogle = false;
 
   @override
@@ -202,16 +201,6 @@ class _SignUpPageState extends State<SignUpPage>
           fullName: _nameController.text.trim(),
           password: _passwordController.text,
         );
-  }
-
-  Future<void> _signUpWithPhone() async {
-    if (!_validateName() || !_validatePhone()) return;
-    setState(() => _isLoadingPhone = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() => _isLoadingPhone = false);
-      _showSuccessSnackBar('OTP sent to ${_phoneController.text}');
-    }
   }
 
   Future<void> _signUpWithGoogle() async {

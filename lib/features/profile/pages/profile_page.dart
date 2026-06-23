@@ -877,23 +877,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _badge(ColorScheme cs, String count) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: AppColors.error,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        count,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
 }
 
 class _MenuItem {

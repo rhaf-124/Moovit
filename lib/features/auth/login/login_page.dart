@@ -32,15 +32,11 @@ class _LoginPageState extends State<LoginPage>
   final FocusNode _phoneFocusNode = FocusNode();
 
   // Error messages
-  String? _emailError;
   String? _passwordError;
-  String? _phoneError;
 
   // UI states
   bool _obscurePassword = true;
   bool _isLoadingEmail = false;
-  bool _isLoadingPhone = false;
-  bool _isLoadingGoogle = false;
 
   @override
   void initState() {
@@ -82,21 +78,12 @@ class _LoginPageState extends State<LoginPage>
 
   // Email validation logic
   bool _validateEmail() {
-    setState(() {
-      _emailError = null;
-    });
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      setState(() {
-        _emailError = 'Email address is required';
-      });
       return false;
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(email)) {
-      setState(() {
-        _emailError = 'Please enter a valid email address';
-      });
       return false;
     }
     return true;
@@ -122,28 +109,6 @@ class _LoginPageState extends State<LoginPage>
     return true;
   }
 
-  bool _validatePhone() {
-    setState(() {
-      _phoneError = null;
-    });
-    final phone = _phoneController.text.trim();
-    if (phone.isEmpty) {
-      setState(() {
-        _phoneError = 'Phone number is required';
-      });
-      return false;
-    }
-    // Remove any non-digit characters for validation
-    final digitsOnly = phone.replaceAll(RegExp(r'\D'), '');
-    if (digitsOnly.length < 9 || digitsOnly.length > 15) {
-      setState(() {
-        _phoneError = 'Please enter a valid phone number (9-15 digits)';
-      });
-      return false;
-    }
-    return true;
-  }
-
   Future<void> _signInWithEmail() async {
     if (!_validateEmail() || !_validatePassword()) return;
     setState(() => _isLoadingEmail = true);
@@ -153,42 +118,9 @@ class _LoginPageState extends State<LoginPage>
         );
   }
 
-  Future<void> _signInWithPhone() async {
-    if (!_validatePhone()) return;
-    setState(() => _isLoadingPhone = true);
-    // Phone login uses phone as identifier + password via the same /auth/login endpoint
-    context.read<AuthCubit>().login(
-          identifier: _phoneController.text.trim(),
-          password: _passwordController.text,
-        );
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoadingGoogle = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() => _isLoadingGoogle = false);
-      _showSuccessSnackBar('Google sign-in not yet connected');
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green.shade600,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   void _clearFieldError(String field) {
     setState(() {
-      if (field == 'email') _emailError = null;
       if (field == 'password') _passwordError = null;
-      if (field == 'phone') _phoneError = null;
     });
   }
 
@@ -220,7 +152,6 @@ class _LoginPageState extends State<LoginPage>
         } else if (state is AuthError) {
           setState(() {
             _isLoadingEmail = false;
-            _isLoadingPhone = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

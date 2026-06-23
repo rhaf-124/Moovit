@@ -16,12 +16,13 @@ class AssignedBusModel {
   });
 
   factory AssignedBusModel.fromJson(Map<String, dynamic> json) {
+    final rawImage = (json['image_url'] ?? json['bus_image']) as String?;
     return AssignedBusModel(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       plateNumber: json['plate_number'] as String? ?? '',
       capacity: json['capacity'] as int? ?? 0,
       model: json['model'] as String? ?? '',
-      imageUrl: json['image_url'] as String?,
+      imageUrl: _fixUrl(rawImage),
     );
   }
 }

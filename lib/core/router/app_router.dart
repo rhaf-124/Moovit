@@ -455,7 +455,7 @@ CustomTransitionPage<void> _noTransitionPage({
     key: state.pageKey,
     child: child,
     transitionDuration: Duration.zero,
-    transitionsBuilder: (_, __, ___, c) => c,
+    transitionsBuilder: (_, _, _, c) => c,
   );
 }
 
@@ -467,7 +467,7 @@ CustomTransitionPage<void> _fadePage({
     key: state.pageKey,
     child: child,
     transitionDuration: const Duration(milliseconds: 400),
-    transitionsBuilder: (_, animation, __, child) =>
+    transitionsBuilder: (_, animation, _, child) =>
         FadeTransition(opacity: animation, child: child),
   );
 }
@@ -480,7 +480,7 @@ CustomTransitionPage<void> _slidePage({
     key: state.pageKey,
     child: child,
     transitionDuration: const Duration(milliseconds: 300),
-    transitionsBuilder: (_, animation, __, child) => SlideTransition(
+    transitionsBuilder: (_, animation, _, child) => SlideTransition(
       position: animation.drive(
         Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
             .chain(CurveTween(curve: Curves.easeInOut)),

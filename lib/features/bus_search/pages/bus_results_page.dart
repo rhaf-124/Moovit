@@ -154,7 +154,7 @@ class _BusResultsPageState extends State<BusResultsPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha:0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -228,7 +228,7 @@ class _BusResultsPageState extends State<BusResultsPage> {
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   itemCount: _filteredBuses.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, i) => _BusCard(
                     bus: _filteredBuses[i],
                     fromCity: widget.params.from,
@@ -257,7 +257,7 @@ class _BusResultsPageState extends State<BusResultsPage> {
             Image.asset(
               'assets/images/empty.jpg',
               width: 220,
-              errorBuilder: (_, __, ___) => const Icon(
+              errorBuilder: (_, _, _) => const Icon(
                 Icons.directions_bus_rounded,
                 size: 80,
                 color: AppColors.grey300,
@@ -298,11 +298,16 @@ class _BusResultsPageState extends State<BusResultsPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            '$count ${count == 1 ? 'bus' : 'buses'} found',
-            style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          Flexible(
+            child: Text(
+              '$count ${count == 1 ? 'bus' : 'buses'} found',
+              style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
+          const SizedBox(width: 8),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               _actionChip(
                 label: 'Sort',
@@ -390,30 +395,35 @@ class _BusResultsPageState extends State<BusResultsPage> {
               ),
               Text('Sort By', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
-              ...options.map((o) {
-                final (opt, label, icon) = o;
-                final selected = _sortOption == opt;
-                return RadioListTile<_SortOption>(
-                  value: opt,
-                  groupValue: _sortOption,
-                  title: Row(
-                    children: [
-                      Icon(icon, size: 18, color: selected ? cs.primary : cs.onSurface),
-                      const SizedBox(width: 8),
-                      Text(label, style: tt.bodyMedium),
-                    ],
-                  ),
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: cs.primary,
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => _sortOption = v);
-                    setLocal(() {});
-                    _applyFiltersAndSort();
-                    Navigator.pop(ctx);
-                  },
-                );
-              }),
+              RadioGroup<_SortOption>(
+                groupValue: _sortOption,
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _sortOption = v);
+                  setLocal(() {});
+                  _applyFiltersAndSort();
+                  Navigator.pop(ctx);
+                },
+                child: Column(
+                  children: options.map((o) {
+                    final (opt, label, icon) = o;
+                    final selected = _sortOption == opt;
+                    return RadioListTile<_SortOption>(
+                      value: opt,
+                      title: Row(
+                        children: [
+                          Icon(icon, size: 18, color: selected ? cs.primary : cs.onSurface),
+                          const SizedBox(width: 8),
+                          Text(label, style: tt.bodyMedium),
+                        ],
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                      fillColor: WidgetStateProperty.resolveWith((states) =>
+                          states.contains(WidgetState.selected) ? cs.primary : null),
+                    );
+                  }).toList(),
+                ),
+              ),
             ],
           ),
         ),
@@ -487,7 +497,9 @@ class _BusResultsPageState extends State<BusResultsPage> {
                     ],
                   ),
                   contentPadding: EdgeInsets.zero,
-                  activeColor: cs.primary,
+                  checkColor: cs.onPrimary,
+                  fillColor: WidgetStateProperty.resolveWith((states) =>
+                      states.contains(WidgetState.selected) ? cs.primary : null),
                   onChanged: (v) {
                     setLocal(() {
                       if (v == true) {
@@ -543,6 +555,7 @@ class _BusCard extends StatelessWidget {
   String _resolveImageUrl(String rawUrl) {
     final uri = Uri.tryParse(rawUrl);
     if (uri == null) return rawUrl;
+    if (uri.isAbsolute) return rawUrl;
     final base = ApiConstants.baseUrl.replaceAll(RegExp(r'/$'), '');
     return '$base${uri.path}';
   }
@@ -579,7 +592,7 @@ class _BusCard extends StatelessWidget {
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha:0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -603,7 +616,7 @@ class _BusCard extends StatelessWidget {
                       ? Image.network(
                           _resolveImageUrl(bus.imageUrl!),
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          errorBuilder: (_, _, _) =>
                               _buildFallbackBusImage(isDark),
                         )
                       : _buildFallbackBusImage(isDark),
@@ -717,7 +730,7 @@ class _BusCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: cs.primary.withOpacity(0.1),
+                    color: cs.primary.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -759,7 +772,7 @@ class _BusCard extends StatelessWidget {
                     style: tt.bodySmall?.copyWith(color: subtle),
                   ),
                   Text(
-                    '₵${bus.pricePerSeat.toStringAsFixed(2)}',
+                    'GH₵${bus.pricePerSeat.toStringAsFixed(2)}',
                     style: tt.titleMedium?.copyWith(
                       color: cs.primary,
                       fontWeight: FontWeight.w700,

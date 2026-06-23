@@ -143,7 +143,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
   String _resolveImageUrl(String rawUrl) {
     final uri = Uri.tryParse(rawUrl);
     if (uri == null) return rawUrl;
-    // Keep only the path+query portion and prepend our base URL
+    if (uri.isAbsolute) return rawUrl;
     final base = ApiConstants.baseUrl.replaceAll(RegExp(r'/$'), '');
     return '$base${uri.path}';
   }
@@ -504,7 +504,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
         backgroundColor: Colors.indigo.shade100,
         backgroundImage:
             NetworkImage(_resolveImageUrl(profile!.profileImageUrl!)),
-        onBackgroundImageError: (_, __) {},
+        onBackgroundImageError: (_, _) {},
         child: null,
       );
     } else {
@@ -613,7 +613,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
               child: Image.network(
                 _resolveImageUrl(bus.imageUrl!),
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: Colors.indigo.shade50,
                   child: const Icon(Icons.directions_bus_rounded,
                       color: Colors.indigo, size: 36),
@@ -938,7 +938,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
                 child: Image.network(
                   _resolveImageUrl(trip.busImageUrl!),
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: Colors.indigo.shade50,
                     child: const Icon(Icons.directions_bus_rounded,
                         color: Colors.indigo, size: 40),

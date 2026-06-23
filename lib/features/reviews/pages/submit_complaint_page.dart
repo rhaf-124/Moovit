@@ -127,7 +127,7 @@ class _SubmitComplaintPageState extends State<SubmitComplaintPage> {
                     ? []
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha:0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -140,7 +140,7 @@ class _SubmitComplaintPageState extends State<SubmitComplaintPage> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: cs.primary.withOpacity(0.1),
+                        color: cs.primary.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(Icons.directions_bus_rounded,
@@ -202,7 +202,7 @@ class _SubmitComplaintPageState extends State<SubmitComplaintPage> {
                 style: tt.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedSubject,
+              initialValue: _selectedSubject,
               decoration: InputDecoration(
                 hintText: 'Select a subject',
                 border: OutlineInputBorder(

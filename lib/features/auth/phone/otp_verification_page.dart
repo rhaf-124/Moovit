@@ -12,7 +12,7 @@ class OTPVerificationPage extends StatefulWidget {
 class _OTPVerificationPageState extends State<OTPVerificationPage> {
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
-  late List<FocusNode> _rawListenerFocusNodes; // for RawKeyboardListener
+  late List<FocusNode> _rawListenerFocusNodes;
   bool _isLoading = false;
   int _resendSeconds = 30;
   bool _canResend = false;
@@ -47,9 +47,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
 
   @override
   void dispose() {
-    for (var c in _controllers) c.dispose();
-    for (var f in _focusNodes) f.dispose();
-    for (var f in _rawListenerFocusNodes) f.dispose();
+    for (var c in _controllers) { c.dispose(); }
+    for (var f in _focusNodes) { f.dispose(); }
+    for (var f in _rawListenerFocusNodes) { f.dispose(); }
     super.dispose();
   }
 
@@ -93,10 +93,10 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
     return SizedBox(
       width: 56,
       height: 70,
-      child: RawKeyboardListener(
+      child: KeyboardListener(
         focusNode: _rawListenerFocusNodes[index],
-        onKey: (event) {
-          if (event is RawKeyDownEvent &&
+        onKeyEvent: (event) {
+          if (event is KeyDownEvent &&
               event.logicalKey == LogicalKeyboardKey.backspace) {
             // If current field is empty → go back and clear previous
             if (_controllers[index].text.isEmpty && index > 0) {
@@ -198,7 +198,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
               Text(
                 "We sent a 6-digit code to",
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 4),
@@ -298,7 +298,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
               // Paste from clipboard option (always visible for convenience)
               TextButton.icon(
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   final clipboard = await Clipboard.getData('text/plain');
+                  if (!mounted) return;
                   if (clipboard?.text != null &&
                       clipboard!.text!.length == 6 &&
                       int.tryParse(clipboard.text!) != null) {
@@ -308,7 +310,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                     }
                     _onOtpComplete();
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(content: Text('Invalid OTP in clipboard')),
                     );
                   }

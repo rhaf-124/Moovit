@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/router/app_router.dart';
@@ -266,7 +264,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
-                              color: accent.withOpacity(isDark ? 0.18 : 0.10),
+                              color: accent.withValues(alpha: isDark ? 0.18 : 0.10),
                               borderRadius: BorderRadius.circular(100),
                             ),
                             child: Text(
@@ -426,7 +424,7 @@ class _ImagePage extends StatelessWidget {
                 data.imageUrl,
                 fit: BoxFit.cover,
 
-                errorBuilder: (_, __, ___) =>
+                errorBuilder: (_, _, _) =>
                     _ImagePlaceholder(accent: data.accent),
               ),
             ),
@@ -440,7 +438,7 @@ class _ImagePage extends StatelessWidget {
                   stops: const [0.45, 1.0],
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.55),
+                    Colors.black.withValues(alpha: 0.55),
                   ],
                 ),
               ),
@@ -457,7 +455,7 @@ class _ImagePage extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       data.accent,
-                      data.accent.withOpacity(0.4),
+                      data.accent.withValues(alpha: 0.4),
                     ],
                   ),
                 ),
@@ -485,8 +483,8 @@ class _ImagePlaceholder extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            accent.withOpacity(isDark ? 0.25 : 0.15),
-            accent.withOpacity(isDark ? 0.10 : 0.05),
+            accent.withValues(alpha: isDark ? 0.25 : 0.15),
+            accent.withValues(alpha: isDark ? 0.10 : 0.05),
           ],
         ),
       ),

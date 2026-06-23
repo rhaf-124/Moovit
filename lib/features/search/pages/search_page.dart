@@ -171,8 +171,8 @@ class _SkeletonList extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 6,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (_, __) => Container(
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (_, _) => Container(
           height: 76,
           decoration: BoxDecoration(
             color: Colors.white,
@@ -203,7 +203,7 @@ class _ErrorState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha:0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.wifi_off_rounded,
@@ -268,6 +268,7 @@ class _Discovery extends StatelessWidget {
               children: popularRoutes.map((r) {
                 return ActionChip(
                   label: Text(r),
+                  labelStyle: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                   avatar: Icon(Icons.trending_up_rounded,
                       size: 16, color: cs.primary),
                   onPressed: () => onPopularTap(r),
@@ -324,7 +325,7 @@ class _Results extends StatelessWidget {
             Image.asset(
               'assets/images/empty.jpg',
               width: 200,
-              errorBuilder: (_, __, ___) => Icon(
+              errorBuilder: (_, _, _) => Icon(
                 Icons.search_off_rounded,
                 size: 72,
                 color: isDark ? AppColors.grey700 : AppColors.grey300,
@@ -344,7 +345,7 @@ class _Results extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: trips.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, i) => _TripTile(
         trip: trips[i],
         isDark: isDark,
@@ -434,7 +435,7 @@ class _TripTile extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha:0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -448,7 +449,7 @@ class _TripTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: cs.primary.withOpacity(0.1),
+                color: cs.primary.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(Icons.directions_bus_rounded,
@@ -553,7 +554,7 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha:0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(

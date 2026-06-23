@@ -44,7 +44,6 @@ String friendlyError(Object e) {
             'Please try again.';
 
       case DioExceptionType.unknown:
-      default:
         break;
     }
   }

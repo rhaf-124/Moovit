@@ -121,8 +121,6 @@ abstract final class AppTheme {
     inverseSurface: AppColors.grey800,
     onInverseSurface: AppColors.grey50,
     inversePrimary: AppColors.primaryLight,
-    background: AppColors.lightBackground,
-    onBackground: AppColors.lightOnSurface,
   );
 
   static const ColorScheme _darkColorScheme = ColorScheme(
@@ -150,8 +148,6 @@ abstract final class AppTheme {
     inverseSurface: AppColors.grey100,
     onInverseSurface: AppColors.grey900,
     inversePrimary: AppColors.primary,
-    background: AppColors.darkBackground,
-    onBackground: AppColors.darkOnSurface,
   );
 
   // ─── Light Theme ─────────────────────────────────────────────────────────
@@ -343,7 +339,7 @@ abstract final class AppTheme {
       // ── NavigationBar (Material 3) ──
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.lightSurface,
-        indicatorColor: AppColors.primary.withOpacity(0.12),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.primary);
@@ -366,7 +362,7 @@ abstract final class AppTheme {
       // ── Chip ──
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.lightSurfaceVariant,
-        selectedColor: AppColors.primary.withOpacity(0.12),
+        selectedColor: AppColors.primary.withValues(alpha: 0.12),
         disabledColor: AppColors.grey100,
         labelStyle: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w500),
         side: const BorderSide(color: AppColors.lightOutline),
@@ -712,7 +708,7 @@ abstract final class AppTheme {
       // ── NavigationBar (Material 3) ──
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.darkSurface,
-        indicatorColor: AppColors.primaryLight.withOpacity(0.16),
+        indicatorColor: AppColors.primaryLight.withValues(alpha: 0.16),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.primaryLight);
@@ -735,7 +731,7 @@ abstract final class AppTheme {
       // ── Chip ──
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.darkSurfaceVariant,
-        selectedColor: AppColors.primaryLight.withOpacity(0.16),
+        selectedColor: AppColors.primaryLight.withValues(alpha: 0.16),
         disabledColor: AppColors.grey800,
         labelStyle: GoogleFonts.outfit(
           fontSize: 13,
@@ -827,7 +823,7 @@ abstract final class AppTheme {
         activeTrackColor: AppColors.primaryLight,
         inactiveTrackColor: AppColors.grey700,
         thumbColor: AppColors.primaryLight,
-        overlayColor: AppColors.primaryLight.withOpacity(0.12),
+        overlayColor: AppColors.primaryLight.withValues(alpha: 0.12),
       ),
 
       // ── TabBar ──

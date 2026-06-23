@@ -149,8 +149,8 @@ class _PaymentPageState extends State<PaymentPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: isWarning
-                    ? AppColors.error.withOpacity(0.15)
-                    : AppColors.success.withOpacity(0.12),
+                    ? AppColors.error.withValues(alpha:0.15)
+                    : AppColors.success.withValues(alpha:0.12),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                     color: isWarning ? AppColors.error : AppColors.success),
@@ -171,7 +171,7 @@ class _PaymentPageState extends State<PaymentPage> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.12),
+                color: AppColors.success.withValues(alpha:0.12),
                 borderRadius: BorderRadius.circular(20)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.lock_rounded, color: AppColors.success, size: 12),
@@ -224,7 +224,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 : const Icon(Icons.payment_rounded, size: 18),
             label: Text(_isPaying
                 ? 'Processing...'
-                : 'Pay ₵${d.total.toStringAsFixed(2)} via ${_method == "paystack" ? "Paystack" : "Mock"}'),
+                : 'Pay GH₵${d.total.toStringAsFixed(2)} via ${_method == "paystack" ? "Paystack" : "Mock"}'),
             style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -294,14 +294,14 @@ class _PaymentPageState extends State<PaymentPage> {
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text('Base Fare:',
                   style: tt.bodySmall?.copyWith(color: subtle)),
-              Text('₵${(d.total + d.bookingResponse!.discountAmount).toStringAsFixed(2)}',
+              Text('GH₵${(d.total + d.bookingResponse!.discountAmount).toStringAsFixed(2)}',
                   style: tt.bodySmall?.copyWith(color: subtle)),
             ]),
             const SizedBox(height: 4),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text('Discount:',
                   style: tt.bodySmall?.copyWith(color: Colors.green.shade600)),
-              Text('- ₵${d.bookingResponse!.discountAmount.toStringAsFixed(2)}',
+              Text('- GH₵${d.bookingResponse!.discountAmount.toStringAsFixed(2)}',
                   style: tt.bodySmall?.copyWith(
                       color: Colors.green.shade600, fontWeight: FontWeight.w600)),
             ]),
@@ -310,7 +310,7 @@ class _PaymentPageState extends State<PaymentPage> {
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('Total Fare:',
                 style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-            Text('₵${d.total.toStringAsFixed(2)}',
+            Text('GH₵${d.total.toStringAsFixed(2)}',
                 style: tt.titleSmall?.copyWith(
                     color: cs.primary, fontWeight: FontWeight.w700)),
           ]),
@@ -355,7 +355,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           style: tt.bodySmall
                               ?.copyWith(color: AppColors.grey400)),
                   ])),
-              Text('₵${d.bus.pricePerSeat.toStringAsFixed(2)}',
+              Text('GH₵${d.bus.pricePerSeat.toStringAsFixed(2)}',
                   style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
             ]),
           ),
@@ -379,7 +379,7 @@ class _PaymentPageState extends State<PaymentPage> {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.06) : card,
+            color: isSelected ? color.withValues(alpha:0.06) : card,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: isSelected ? color : border,
@@ -387,14 +387,19 @@ class _PaymentPageState extends State<PaymentPage> {
           ),
           child: Row(children: [
             Radio<String>(
-                value: id, groupValue: _method,
+                value: id,
+                // ignore: deprecated_member_use
+                groupValue: _method,
+                // ignore: deprecated_member_use
                 onChanged: (v) => setState(() => _method = v!),
-                activeColor: color),
+                fillColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected) ? color : null,
+                )),
             const SizedBox(width: 4),
             Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(10)),
               child: Icon(icon, color: color, size: 22),
             ),

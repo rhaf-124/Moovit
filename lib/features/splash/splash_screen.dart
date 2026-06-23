@@ -115,8 +115,9 @@ class _SplashScreenState extends State<SplashScreen>
     // the animation without relying on polling the cubit state —
     // which could race past AuthInitial before the while-loop even starts
     // (the case for first-time users with no stored token).
+    final authCubit = context.read<AuthCubit>();
     final authFuture = Future.microtask(
-      () => context.read<AuthCubit>().checkAuthStatus(),
+      () => authCubit.checkAuthStatus(),
     );
 
     // Defer starting the animation and waiting until after the first frame has rendered.
@@ -172,6 +173,7 @@ class _SplashScreenState extends State<SplashScreen>
             context.go(target);
           } else {
             final hasSeen = await TokenStorage().hasSeenOnboarding();
+            if (!mounted) return;
             if (hasSeen) {
               context.go(AppRoutes.login);
             } else {
@@ -300,7 +302,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   fontSize: 11,
                                   fontWeight: FontWeight.w300,
                                   color: isDark
-                                      ? Colors.white.withOpacity(0.50)
+                                      ? Colors.white.withValues(alpha:0.50)
                                       : AppColors.lightOnSurfaceVariant,
                                   letterSpacing: 3.5,
                                 ),
@@ -326,7 +328,7 @@ class _SplashScreenState extends State<SplashScreen>
                         value: _progress.value,
                         minHeight: 2.5,
                         backgroundColor: isDark
-                            ? Colors.white.withOpacity(0.10)
+                            ? Colors.white.withValues(alpha:0.10)
                             : AppColors.lightOutline,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           Color.lerp(
@@ -416,8 +418,8 @@ class _Orb extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: RadialGradient(
               colors: [
-                color.withOpacity(opacity),
-                color.withOpacity(0.0),
+                color.withValues(alpha:opacity),
+                color.withValues(alpha:0.0),
               ],
             ),
           ),
@@ -448,28 +450,28 @@ class _GlassCard extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Colors.white.withOpacity(0.18),
-                      Colors.white.withOpacity(0.05),
+                      Colors.white.withValues(alpha:0.18),
+                      Colors.white.withValues(alpha:0.05),
                     ]
                   : [
-                      Colors.white.withOpacity(0.72),
-                      Colors.white.withOpacity(0.40),
+                      Colors.white.withValues(alpha:0.72),
+                      Colors.white.withValues(alpha:0.40),
                     ],
             ),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.22)
-                  : AppColors.primary.withOpacity(0.20),
+                  ? Colors.white.withValues(alpha:0.22)
+                  : AppColors.primary.withValues(alpha:0.20),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(isDark ? 0.35 : 0.15),
+                color: AppColors.primary.withValues(alpha:isDark ? 0.35 : 0.15),
                 blurRadius: 48,
                 spreadRadius: -8,
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.25 : 0.08),
+                color: Colors.black.withValues(alpha:isDark ? 0.25 : 0.08),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
