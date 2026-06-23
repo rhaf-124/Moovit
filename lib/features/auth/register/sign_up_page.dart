@@ -58,7 +58,6 @@ class _SignUpPageState extends State<SignUpPage>
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoadingEmail = false;
-  bool _isLoadingGoogle = false;
 
   @override
   void initState() {
@@ -201,27 +200,6 @@ class _SignUpPageState extends State<SignUpPage>
           fullName: _nameController.text.trim(),
           password: _passwordController.text,
         );
-  }
-
-  Future<void> _signUpWithGoogle() async {
-    setState(() => _isLoadingGoogle = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() => _isLoadingGoogle = false);
-      _showSuccessSnackBar('Google sign-up not yet connected');
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green.shade600,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   void _clearFieldError(String field) {
@@ -538,65 +516,7 @@ class _SignUpPageState extends State<SignUpPage>
                                     ),
                                   )
                                 : const Text(
-                                    'Sign Up with Email',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // OR Divider
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(color: Colors.grey.shade300),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              child: Text(
-                                'OR',
-                                style: TextStyle(color: Colors.grey.shade500),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(color: Colors.grey.shade300),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-
-
-                        // Google Sign Up
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          height: 52,
-                          child: ElevatedButton.icon(
-                            onPressed: _isLoadingGoogle
-                                ? null
-                                : _signUpWithGoogle,
-                            icon: Icon(
-                              Icons.g_mobiledata,
-                              size: 24,
-                              color: isDark
-                                  ? AppColors.lightBackground
-                                  : AppColors.darkBackground,
-                            ),
-                            label: _isLoadingGoogle
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Continue with Google',
+                                    'Sign Up',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,

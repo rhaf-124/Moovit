@@ -1,4 +1,5 @@
 import 'package:bus_ticketing/core/router/app_router.dart';
+import 'package:bus_ticketing/core/utils/error_formatter.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,14 +77,14 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
       final resetToken = await repo.verifyResetOtp(widget.email, _otpCode);
       if (!mounted) return;
       context.push(AppRoutes.newPassword, extra: resetToken);
-    } on DioException catch (e) {
+    } catch (e) {
       if (!mounted) return;
-      final detail = e.response?.data is Map
-          ? (e.response!.data as Map)['detail']?.toString()
-          : null;
+      final message = e is DioException && e.response?.data is Map
+          ? (e.response!.data as Map)['detail']?.toString() ?? friendlyError(e)
+          : friendlyError(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(detail ?? 'Invalid or expired code'),
+          content: Text(message),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
         ),
@@ -125,10 +126,10 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
     }
   }
 
-  Widget _buildOtpField(int index) {
+  Widget _buildOtpField(int index, double size) {
     return SizedBox(
-      width: 48,
-      height: 64,
+      width: size,
+      height: size * 1.2,
       child: KeyboardListener(
         focusNode: _rawFocusNodes[index],
         onKeyEvent: (event) {
@@ -146,7 +147,13 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
           keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
           maxLength: 1,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
           decoration: InputDecoration(
             counterText: '',
             filled: true,
@@ -159,15 +166,16 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(
                 color: Theme.of(context).primaryColor,
-                width: 2,
+                width: 2.5,
               ),
             ),
+            contentPadding: EdgeInsets.zero,
           ),
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
@@ -232,10 +240,18 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
                 ),
               ),
               const SizedBox(height: 36),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children:
-                    List.generate(6, (index) => _buildOtpField(index)),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final fieldSize = ((constraints.maxWidth - 5 * 8) / 6)
+                      .clamp(40.0, 58.0);
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(
+                      6,
+                      (index) => _buildOtpField(index, fieldSize),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 40),
               SizedBox(

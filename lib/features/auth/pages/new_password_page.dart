@@ -1,4 +1,5 @@
 import 'package:bus_ticketing/core/router/app_router.dart';
+import 'package:bus_ticketing/core/utils/error_formatter.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -76,14 +77,14 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
       );
       // Clear the entire reset flow and go to login
       context.go(AppRoutes.login);
-    } on DioException catch (e) {
+    } catch (e) {
       if (!mounted) return;
-      final detail = e.response?.data is Map
-          ? (e.response!.data as Map)['detail']?.toString()
-          : null;
+      final message = e is DioException && e.response?.data is Map
+          ? (e.response!.data as Map)['detail']?.toString() ?? friendlyError(e)
+          : friendlyError(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(detail ?? 'Something went wrong'),
+          content: Text(message),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
         ),

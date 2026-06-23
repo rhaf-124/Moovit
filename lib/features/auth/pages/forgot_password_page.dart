@@ -1,4 +1,5 @@
 import 'package:bus_ticketing/core/router/app_router.dart';
+import 'package:bus_ticketing/core/utils/error_formatter.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,13 +52,30 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       if (!mounted) return;
       context.push(AppRoutes.resetOtp, extra: email);
     } on DioException catch (e) {
+      debugPrint('❌ Forgot password DioException:');
+      debugPrint('   type    : ${e.type}');
+      debugPrint('   status  : ${e.response?.statusCode}');
+      debugPrint('   data    : ${e.response?.data}');
+      debugPrint('   message : ${e.message}');
       if (!mounted) return;
-      final detail = e.response?.data is Map
-          ? (e.response!.data as Map)['detail']?.toString()
-          : null;
+      final data = e.response?.data;
+      final message = data is Map
+          ? data['detail']?.toString() ?? friendlyError(e)
+          : friendlyError(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(detail ?? 'Something went wrong'),
+          content: Text(message),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('❌ Forgot password unexpected error: $e');
+      debugPrint('$st');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e)),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
         ),
