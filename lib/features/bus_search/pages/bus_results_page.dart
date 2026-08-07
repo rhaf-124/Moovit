@@ -25,6 +25,9 @@ class _BusResultsPageState extends State<BusResultsPage> {
   String? _errorMessage;
   List<BusModel> _buses = [];
   List<BusModel> _filteredBuses = [];
+  // Trip id → departure date, used in "all trips" mode where each trip may
+  // depart on a different day than params.date.
+  final Map<String, DateTime> _tripDates = {};
 
   _SortOption _sortOption = _SortOption.departureAsc;
   Set<String> _amenityFilters = {};
@@ -73,22 +76,32 @@ class _BusResultsPageState extends State<BusResultsPage> {
       final day = widget.params.date.day.toString().padLeft(2, '0');
       final dateStr = '$year-$month-$day';
 
+      // For an "all trips" offer, drop the origin/destination/date filters so
+      // every upcoming trip the offer applies to is listed.
+      final allTrips = widget.params.isAllTrips;
       final trips = await repo.searchTrips(
-        origin: widget.params.from,
-        destination: widget.params.to,
-        date: dateStr,
+        origin: allTrips ? null : widget.params.from,
+        destination: allTrips ? null : widget.params.to,
+        date: allTrips ? null : dateStr,
       );
 
       if (mounted) {
         final now = DateTime.now();
+        final tripId = widget.params.tripId;
         setState(() {
-          _buses = trips
+          final visible = trips
               .where((t) =>
                   t.status == 'scheduled' &&
                   t.availableSeats > 0 &&
-                  t.departureTime.isAfter(now))
-              .map((t) => t.toBusModel())
+                  t.departureTime.isAfter(now) &&
+                  // If the offer is tied to a specific trip, show only that trip.
+                  (tripId == null || t.id == tripId))
               .toList();
+          _tripDates
+            ..clear()
+            ..addEntries(visible.map(
+                (t) => MapEntry(t.id, DateUtils.dateOnly(t.departureTime))));
+          _buses = visible.map((t) => t.toBusModel()).toList();
           _isLoading = false;
         });
         _applyFiltersAndSort();
@@ -122,11 +135,15 @@ class _BusResultsPageState extends State<BusResultsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${widget.params.from} → ${widget.params.to}',
+              widget.params.isAllTrips
+                  ? (widget.params.offerTitle ?? 'All Trips')
+                  : '${widget.params.from} → ${widget.params.to}',
               style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             Text(
-              _fmtDate(widget.params.date),
+              widget.params.isAllTrips
+                  ? 'All upcoming trips'
+                  : _fmtDate(widget.params.date),
               style: tt.bodySmall?.copyWith(
                 color: isDark
                     ? AppColors.darkOnSurfaceVariant
@@ -219,8 +236,10 @@ class _BusResultsPageState extends State<BusResultsPage> {
   // ── Results ─────────────────────────────────────────────────────────────────
 
   Widget _buildResults(TextTheme tt, ColorScheme cs, bool isDark) {
+    final discount = widget.params.offerDiscountPercent;
     return Column(
       children: [
+        if (discount != null) _buildOfferBanner(discount, widget.params.offerTitle, cs, tt),
         _topBar(tt, cs, count: _filteredBuses.length, enabled: _buses.isNotEmpty),
         Expanded(
           child: _filteredBuses.isEmpty
@@ -229,21 +248,71 @@ class _BusResultsPageState extends State<BusResultsPage> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   itemCount: _filteredBuses.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) => _BusCard(
-                    bus: _filteredBuses[i],
-                    fromCity: widget.params.from,
-                    toCity: widget.params.to,
-                    isDark: isDark,
-                    tt: tt,
-                    cs: cs,
-                    onSelectSeats: () => context.push(
-                      AppRoutes.seatSelection,
-                      extra: {'bus': _filteredBuses[i], 'params': widget.params},
-                    ),
-                  ),
+                  itemBuilder: (_, i) {
+                    final bus = _filteredBuses[i];
+                    // In "all trips" mode each card shows its own route, and the
+                    // params passed on are filled in from the selected trip so
+                    // seat selection and payment display the right route.
+                    final effectiveParams = widget.params.isAllTrips
+                        ? widget.params.copyWith(
+                            from: bus.origin,
+                            to: bus.destination,
+                            date: _tripDates[bus.id])
+                        : widget.params;
+                    return _BusCard(
+                      bus: bus,
+                      fromCity: effectiveParams.from,
+                      toCity: effectiveParams.to,
+                      isDark: isDark,
+                      tt: tt,
+                      cs: cs,
+                      discountPercent: discount,
+                      onSelectSeats: () => context.push(
+                        AppRoutes.seatSelection,
+                        extra: {'bus': bus, 'params': effectiveParams},
+                      ),
+                    );
+                  },
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOfferBanner(double discount, String? title, ColorScheme cs, TextTheme tt) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.secondary.withValues(alpha: 0.15), AppColors.secondary.withValues(alpha: 0.05)],
+        ),
+        border: Border(bottom: BorderSide(color: AppColors.secondary.withValues(alpha: 0.3))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '${discount.toInt()}% OFF',
+              style: tt.labelSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title != null ? 'Offer applied: $title' : 'Special offer applied to all prices below',
+              style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600, color: AppColors.secondary),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Icon(Icons.local_offer_rounded, size: 16, color: AppColors.secondary),
+        ],
+      ),
     );
   }
 
@@ -542,6 +611,7 @@ class _BusCard extends StatelessWidget {
     required this.tt,
     required this.cs,
     required this.onSelectSeats,
+    this.discountPercent,
   });
 
   final BusModel bus;
@@ -551,6 +621,7 @@ class _BusCard extends StatelessWidget {
   final TextTheme tt;
   final ColorScheme cs;
   final VoidCallback onSelectSeats;
+  final double? discountPercent;
 
   String _resolveImageUrl(String rawUrl) {
     final uri = Uri.tryParse(rawUrl);
@@ -771,13 +842,29 @@ class _BusCard extends StatelessWidget {
                     'Starting from',
                     style: tt.bodySmall?.copyWith(color: subtle),
                   ),
-                  Text(
-                    'GH₵${bus.pricePerSeat.toStringAsFixed(2)}',
-                    style: tt.titleMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
+                  if (discountPercent != null) ...[
+                    Text(
+                      'GH₵${bus.pricePerSeat.toStringAsFixed(2)}',
+                      style: tt.bodySmall?.copyWith(
+                        color: AppColors.grey400,
+                        decoration: TextDecoration.lineThrough,
+                      ),
                     ),
-                  ),
+                    Text(
+                      'GH₵${(bus.pricePerSeat * (1 - discountPercent! / 100)).toStringAsFixed(2)}',
+                      style: tt.titleMedium?.copyWith(
+                        color: AppColors.secondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ] else
+                    Text(
+                      'GH₵${bus.pricePerSeat.toStringAsFixed(2)}',
+                      style: tt.titleMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                 ],
               ),
               ElevatedButton(

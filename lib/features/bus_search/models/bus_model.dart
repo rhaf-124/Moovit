@@ -29,6 +29,8 @@ class BusModel {
   final List<String> tags;
   final List<SeatInfo> prePopulatedSeats;
   final String? imageUrl;
+  final String origin;
+  final String destination;
 
   const BusModel({
     required this.id,
@@ -45,6 +47,8 @@ class BusModel {
     required this.tags,
     required this.prePopulatedSeats,
     this.imageUrl,
+    this.origin = '',
+    this.destination = '',
   });
 
   int get availableSeats => totalSeats - prePopulatedSeats.length;
@@ -64,6 +68,8 @@ class BusModel {
     List<String>? tags,
     List<SeatInfo>? prePopulatedSeats,
     String? imageUrl,
+    String? origin,
+    String? destination,
   }) {
     return BusModel(
       id: id ?? this.id,
@@ -80,6 +86,8 @@ class BusModel {
       tags: tags ?? this.tags,
       prePopulatedSeats: prePopulatedSeats ?? this.prePopulatedSeats,
       imageUrl: imageUrl ?? this.imageUrl,
+      origin: origin ?? this.origin,
+      destination: destination ?? this.destination,
     );
   }
 }

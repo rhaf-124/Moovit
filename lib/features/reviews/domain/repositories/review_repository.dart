@@ -7,12 +7,12 @@ abstract interface class ReviewRepository {
     required String subject,
     required String description,
   });
-  Future<List<ComplaintModel>> listComplaints();
+  Future<List<ComplaintModel>> listComplaints({String? tripId});
   Future<RatingModel> submitRating({
     required String tripId,
     required int tripRating,
     required int driverRating,
     String? comment,
   });
-  Future<List<RatingModel>> listRatings();
+  Future<List<RatingModel>> listRatings({String? tripId});
 }

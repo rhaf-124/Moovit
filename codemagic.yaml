@@ -1,0 +1,68 @@
+workflows:
+  android-apk-testing:
+    name: Android APK (Testing)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: stable
+      java: 17
+      # Reference the keystore you upload in Codemagic UI →
+      # Teams > Integrations > Code signing identities > Android keystores
+      # Name it "moovit_keystore"; Codemagic will inject:
+      #   CM_KEYSTORE, CM_KEYSTORE_PATH, CM_KEYSTORE_PASSWORD,
+      #   CM_KEY_ALIAS, CM_KEY_PASSWORD automatically.
+      android_signing:
+        - moovit_keystore
+      groups:
+        # Optional env-var group for Firebase if you move google-services.json out of repo
+        # - firebase_credentials
+      vars:
+        PACKAGE_NAME: "com.moovit.busticketing"
+
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    scripts:
+      - name: Write key.properties for Gradle signing
+        script: |
+          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          EOF
+
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Analyze
+        script: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        script: flutter test
+
+      - name: Build release APK
+        script: |
+          flutter build apk --release \
+            --build-name=1.0.$PROJECT_BUILD_NUMBER \
+            --build-number=$PROJECT_BUILD_NUMBER
+
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/mapping.txt   # ProGuard/R8 mapping (useful for crash reports)
+      - flutter_drive.log
+
+    publishing:
+      email:
+        recipients:
+          - projectatu123@gmail.com
+        notify:
+          success: true
+          failure: true

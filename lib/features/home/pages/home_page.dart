@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   List<SpecialOfferModel> _specialOffers = [];
   bool _tripsLoading = true;
   bool _offersLoading = true;
+  bool _isRefreshing = false;
 
   static const List<String> _cities = [
     'Accra',
@@ -80,6 +81,12 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {
       if (mounted) setState(() => _tripsLoading = false);
     }
+  }
+
+  Future<void> _refreshHome() async {
+    setState(() => _isRefreshing = true);
+    await Future.wait([_loadPopularRoutes(), _loadSpecialOffers()]);
+    if (mounted) setState(() => _isRefreshing = false);
   }
 
   Future<void> _pickDate() async {
@@ -140,33 +147,37 @@ class _HomePageState extends State<HomePage> {
         children: [
           _buildHeader(context, isDark, tt, cs),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                    child: _buildSearchCard(context, isDark, tt, cs),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    context, tt, 'Popular Routes', 'View All',
-                    onActionTap: () => context.push(AppRoutes.search),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPopularRoutes(context, isDark, tt, cs),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    context,
-                    tt,
-                    'Special Offers',
-                    'Limited Time',
-                    accentLabel: true,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSpecialOffers(context, tt),
-                ],
+            child: RefreshIndicator(
+              onRefresh: _refreshHome,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      child: _buildSearchCard(context, isDark, tt, cs),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(
+                      context, tt, 'Popular Routes', 'View All',
+                      onActionTap: () => context.push(AppRoutes.search),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildPopularRoutes(context, isDark, tt, cs),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(
+                      context,
+                      tt,
+                      'Special Offers',
+                      'Limited Time',
+                      accentLabel: true,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSpecialOffers(context, tt),
+                  ],
+                ),
               ),
             ),
           ),
@@ -245,6 +256,27 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                onPressed: _isRefreshing ? null : _refreshHome,
+                icon: _isRefreshing
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: isDark
+                              ? AppColors.darkOnSurface
+                              : AppColors.lightOnSurface,
+                        ),
+                      )
+                    : Icon(
+                        Icons.refresh_rounded,
+                        color: isDark
+                            ? AppColors.darkOnSurface
+                            : AppColors.lightOnSurface,
+                      ),
+                tooltip: 'Refresh',
               ),
               IconButton(
                 onPressed: () {
@@ -644,22 +676,30 @@ class _HomePageState extends State<HomePage> {
         separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (_, i) {
           final offer = _specialOffers[i];
-          final hasRoute = offer.routeOrigin != null && offer.routeDestination != null;
+          // Offers with no linked route/trip apply to all trips — navigate
+          // with empty from/to so the results page lists every upcoming trip.
+          final origin = offer.routeOrigin ?? '';
+          final destination = offer.routeDestination ?? '';
+          // For trip-specific offers use the trip's departure date so the search
+          // lands on the right day; fall back to today for route-wide offers.
+          final searchDate = offer.tripDepartureTime != null
+              ? DateUtils.dateOnly(offer.tripDepartureTime!)
+              : DateTime.now();
           return _OfferCard(
             offer: offer,
             tt: tt,
-            onTap: hasRoute
-                ? () => context.push(
-                      AppRoutes.busResults,
-                      extra: BusSearchParams(
-                        from: offer.routeOrigin!,
-                        to: offer.routeDestination!,
-                        date: DateTime.now(),
-                        offerId: offer.id,
-                        offerDiscountPercent: offer.discountPercent,
-                      ),
-                    )
-                : null,
+            onTap: () => context.push(
+              AppRoutes.busResults,
+              extra: BusSearchParams(
+                from: origin,
+                to: destination,
+                date: searchDate,
+                offerId: offer.id,
+                offerDiscountPercent: offer.discountPercent,
+                offerTitle: offer.title,
+                tripId: offer.tripId,
+              ),
+            ),
           );
         },
       ),

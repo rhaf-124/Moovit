@@ -162,7 +162,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         '${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}';
 
     final buf = StringBuffer();
-    buf.writeln('🎫 Moovit Bus Booking');
+    buf.writeln('🎫 VIPGo Bus Booking');
     buf.writeln('─' * 30);
     buf.writeln('Ref: ${b.shortRef}');
     buf.writeln('Status: ${_statusLabel(b.status)}');
@@ -199,7 +199,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     buf.writeln('📅 Booked: ${fmtDt(b.createdAt)}');
     buf.writeln();
     buf.writeln('─' * 30);
-    buf.writeln('Shared via Moovit Bus Ticketing');
+    buf.writeln('Shared via VIPGo Bus Ticketing');
 
     Share.share(buf.toString());
   }

@@ -51,6 +51,8 @@ extension TripResponseX on TripResponse {
       tags: const ['Express'], // default tags
       prePopulatedSeats: prePopulated,
       imageUrl: busImage,
+      origin: origin,
+      destination: destination,
     );
   }
 }

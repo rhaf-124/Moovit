@@ -34,6 +34,27 @@ final class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
 }
 
+/// Signup succeeded — a 6-digit verification code was emailed to [email].
+final class AuthRegistrationEmailSent extends AuthState {
+  const AuthRegistrationEmailSent(this.email);
+
+  final String email;
+
+  @override
+  List<Object?> get props => [email];
+}
+
+/// Login was rejected because the account's email is not verified yet.
+/// The backend has already sent a fresh code to [email].
+final class AuthEmailUnverified extends AuthState {
+  const AuthEmailUnverified(this.email);
+
+  final String email;
+
+  @override
+  List<Object?> get props => [email];
+}
+
 final class AuthDeactivated extends AuthState {
   const AuthDeactivated();
 }

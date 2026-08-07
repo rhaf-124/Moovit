@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -69,11 +70,43 @@ class _DriverScanPageState extends State<DriverScanPage>
   }
 
   String _friendlyError(Object e) {
-    final msg = e.toString().toLowerCase();
+    String msg;
+    if (e is DioException) {
+      final data = e.response?.data;
+      final detail = data is Map ? data['detail'] : null;
+      if (detail is String) {
+        msg = detail.toLowerCase();
+      } else if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        return 'No connection. Check your internet and try again.';
+      } else {
+        msg = '';
+      }
+    } else {
+      msg = e.toString().toLowerCase();
+    }
+
     if (msg.contains('already') || msg.contains('boarded')) {
       return 'This ticket has already been scanned.';
     }
-    if (msg.contains('not found') || msg.contains('invalid')) {
+    if (msg.contains('not in boarding') || msg.contains('in-progress')) {
+      return 'This trip has not started boarding yet.';
+    }
+    if (msg.contains('not in confirmed state')) {
+      return 'This booking is not confirmed yet.';
+    }
+    if (msg.contains('not paid')) {
+      return 'This ticket has not been paid for.';
+    }
+    if (msg.contains('does not belong')) {
+      return 'This ticket is not for your current trip.';
+    }
+    if (msg.contains('not found')) {
+      return 'Ticket not found.';
+    }
+    if (msg.contains('invalid') || msg.contains('tampered')) {
       return 'Invalid ticket code. Please try again.';
     }
     if (msg.contains('expired') || msg.contains('cancelled')) {
@@ -278,14 +311,13 @@ class _DriverScanPageState extends State<DriverScanPage>
                 TextField(
                   controller: _manualCodeController,
                   autofocus: true,
-                  textCapitalization: TextCapitalization.characters,
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(
-                        RegExp(r'[a-zA-Z0-9\-]')),
+                        RegExp(r'[a-zA-Z0-9\-:]')),
                   ],
                   decoration: InputDecoration(
-                    labelText: 'Booking ID or Ticket Code',
-                    hintText: 'e.g. A1B2C3D4',
+                    labelText: 'Ticket Code',
+                    hintText: 'Paste the full code from the ticket',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -294,7 +326,7 @@ class _DriverScanPageState extends State<DriverScanPage>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter the 8-character booking reference or full ID',
+                  'Paste the full ticket code (includes colons) shown under the passenger\'s QR code',
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white38 : Colors.black38,

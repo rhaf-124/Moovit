@@ -323,7 +323,7 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
                     color: AppColors.primary, size: 40),
               ),
               const SizedBox(height: 16),
-              Text('Moovit Bus Ticketing',
+              Text('VIPGo Bus Ticketing',
                   style: tt.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
@@ -345,7 +345,7 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
                     Icon(Icons.copyright_rounded,
                         size: 14, color: subtle),
                     const SizedBox(width: 4),
-                    Text('2026 Moovit Ltd. All rights reserved.',
+                    Text('2026 VIPGo Ltd. All rights reserved.',
                         style: tt.bodySmall?.copyWith(color: subtle)),
                   ]),
               const SizedBox(height: 20),

@@ -221,23 +221,22 @@ class _SignUpPageState extends State<SignUpPage>
 
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) {
+        if (state is AuthRegistrationEmailSent) {
+          setState(() => _isLoadingEmail = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Registration successful! Welcome, ${state.user.fullName}.'),
+              content: const Text(
+                'Account created! Enter the 6-digit code we emailed you to verify your account.',
+              ),
               backgroundColor: Colors.green.shade600,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              duration: const Duration(seconds: 2),
+              duration: const Duration(seconds: 3),
             ),
           );
-          if (state.user.role == 'driver') {
-            context.go(AppRoutes.driverDashboard);
-          } else {
-            context.go(AppRoutes.home);
-          }
+          context.go(AppRoutes.verifyEmail, extra: state.email);
         } else if (state is AuthError) {
           setState(() => _isLoadingEmail = false);
           ScaffoldMessenger.of(context).showSnackBar(

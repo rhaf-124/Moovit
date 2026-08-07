@@ -149,6 +149,24 @@ class _LoginPageState extends State<LoginPage>
           } else {
             context.go(AppRoutes.home);
           }
+        } else if (state is AuthEmailUnverified) {
+          setState(() {
+            _isLoadingEmail = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Your email is not verified yet. We sent you a new 6-digit code.',
+              ),
+              backgroundColor: Colors.orange.shade700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          context.push(AppRoutes.verifyEmail, extra: state.email);
         } else if (state is AuthError) {
           setState(() {
             _isLoadingEmail = false;
@@ -227,7 +245,7 @@ class _LoginPageState extends State<LoginPage>
                             ],
                           ),
                           child: Image.asset(
-                            "assets/images/Moovit.png",
+                            "assets/images/VIPGo.png",
                             width: 40,
                             height: 40,
                           ),

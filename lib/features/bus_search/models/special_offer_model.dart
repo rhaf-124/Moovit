@@ -16,6 +16,8 @@ class SpecialOfferModel {
   final String iconName;
   final String? routeOrigin;
   final String? routeDestination;
+  // Set when the offer is linked to a specific trip
+  final DateTime? tripDepartureTime;
 
   const SpecialOfferModel({
     required this.id,
@@ -35,9 +37,17 @@ class SpecialOfferModel {
     required this.iconName,
     this.routeOrigin,
     this.routeDestination,
+    this.tripDepartureTime,
   });
 
   factory SpecialOfferModel.fromJson(Map<String, dynamic> json) {
+    // route_origin/destination come from a route_id link;
+    // trip_route_origin/destination come from a trip_id link — use as fallback.
+    final routeOrigin = (json['route_origin'] as String?)
+        ?? (json['trip_route_origin'] as String?);
+    final routeDestination = (json['route_destination'] as String?)
+        ?? (json['trip_route_destination'] as String?);
+
     return SpecialOfferModel(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -54,8 +64,11 @@ class SpecialOfferModel {
       colorHexStart: json['color_hex_start'] as String? ?? '#6366F1',
       colorHexEnd: json['color_hex_end'] as String? ?? '#14B8A6',
       iconName: json['icon_name'] as String? ?? 'local_offer',
-      routeOrigin: json['route_origin'] as String?,
-      routeDestination: json['route_destination'] as String?,
+      routeOrigin: routeOrigin,
+      routeDestination: routeDestination,
+      tripDepartureTime: json['trip_departure_time'] != null
+          ? DateTime.parse(json['trip_departure_time'] as String)
+          : null,
     );
   }
 }

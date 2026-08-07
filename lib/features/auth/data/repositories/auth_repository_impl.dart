@@ -27,24 +27,29 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AuthResponse> register({
+  Future<String> register({
     required String phone,
     required String email,
     required String fullName,
     required String password,
-  }) async {
-    final result = await _remote.register(
+  }) {
+    // No tokens are issued at signup — the user must verify their email
+    // and then log in.
+    return _remote.register(
       phone: phone,
       email: email,
       fullName: fullName,
       password: password,
     );
-    await _storage.saveTokens(
-      access: result.accessToken,
-      refresh: result.refreshToken,
-    );
-    return result;
   }
+
+  @override
+  Future<void> verifyEmail(String email, String code) =>
+      _remote.verifyEmail(email, code);
+
+  @override
+  Future<void> resendVerificationCode(String email) =>
+      _remote.resendVerificationCode(email);
 
   @override
   Future<void> logout() async {

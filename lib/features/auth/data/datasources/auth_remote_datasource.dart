@@ -8,7 +8,9 @@ class AuthRemoteDataSource {
 
   final Dio _dio;
 
-  Future<AuthResponse> register({
+  /// Registers a client account. The backend responds with a message and the
+  /// email a 6-digit verification code was sent to (no tokens yet).
+  Future<String> register({
     required String phone,
     required String email,
     required String fullName,
@@ -23,7 +25,21 @@ class AuthRemoteDataSource {
         'password': password,
       },
     );
-    return AuthResponse.fromJson(response.data!);
+    return response.data!['email'] as String;
+  }
+
+  Future<void> verifyEmail(String email, String code) async {
+    await _dio.post<void>(
+      '/auth/verify-email',
+      data: {'email': email, 'code': code},
+    );
+  }
+
+  Future<void> resendVerificationCode(String email) async {
+    await _dio.post<void>(
+      '/auth/resend-verification',
+      data: {'email': email},
+    );
   }
 
   Future<AuthResponse> login({

@@ -7,12 +7,17 @@ abstract class AuthRepository {
     required String password,
   });
 
-  Future<AuthResponse> register({
+  /// Returns the email the verification code was sent to.
+  Future<String> register({
     required String phone,
     required String email,
     required String fullName,
     required String password,
   });
+
+  Future<void> verifyEmail(String email, String code);
+
+  Future<void> resendVerificationCode(String email);
 
   Future<void> logout();
 

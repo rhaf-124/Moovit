@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -149,7 +150,7 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,61 +226,63 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
 
     final initialCenter = busPos ?? destPos ?? const LatLng(5.6037, -0.1870);
 
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: initialCenter,
-        initialZoom: 13,
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.bus_ticketing',
+    return RepaintBoundary(
+      child: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: initialCenter,
+          initialZoom: 13,
         ),
-        if (busPos != null && destPos != null)
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: [busPos, destPos],
-                strokeWidth: 3.5,
-                color: AppColors.primary.withValues(alpha:0.8),
-              ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.example.bus_ticketing',
+          ),
+          if (busPos != null && destPos != null)
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: [busPos, destPos],
+                  strokeWidth: 3.5,
+                  color: AppColors.primary.withValues(alpha:0.8),
+                ),
+              ],
+            ),
+          MarkerLayer(
+            markers: [
+              if (busPos != null)
+                Marker(
+                  point: busPos,
+                  width: 48,
+                  height: 48,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha:0.4),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        )
+                      ],
+                    ),
+                    child: const Icon(Icons.directions_bus_rounded,
+                        color: Colors.white, size: 26),
+                  ),
+                ),
+              if (destPos != null)
+                Marker(
+                  point: destPos,
+                  width: 40,
+                  height: 40,
+                  child: const Icon(Icons.location_pin,
+                      color: Colors.red, size: 40),
+                ),
             ],
           ),
-        MarkerLayer(
-          markers: [
-            if (busPos != null)
-              Marker(
-                point: busPos,
-                width: 48,
-                height: 48,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha:0.4),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      )
-                    ],
-                  ),
-                  child: const Icon(Icons.directions_bus_rounded,
-                      color: Colors.white, size: 26),
-                ),
-              ),
-            if (destPos != null)
-              Marker(
-                point: destPos,
-                width: 40,
-                height: 40,
-                child: const Icon(Icons.location_pin,
-                    color: Colors.red, size: 40),
-              ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 

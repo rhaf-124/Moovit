@@ -18,8 +18,11 @@ class ReviewRemoteDataSource {
     return ComplaintModel.fromJson(response.data!);
   }
 
-  Future<List<ComplaintModel>> listComplaints() async {
-    final response = await _dio.get<List<dynamic>>('/reviews/complaints');
+  Future<List<ComplaintModel>> listComplaints({String? tripId}) async {
+    final response = await _dio.get<List<dynamic>>(
+      '/reviews/complaints',
+      queryParameters: tripId != null ? {'trip_id': tripId} : null,
+    );
     return (response.data ?? [])
         .map((e) => ComplaintModel.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -43,8 +46,11 @@ class ReviewRemoteDataSource {
     return RatingModel.fromJson(response.data!);
   }
 
-  Future<List<RatingModel>> listRatings() async {
-    final response = await _dio.get<List<dynamic>>('/reviews/ratings');
+  Future<List<RatingModel>> listRatings({String? tripId}) async {
+    final response = await _dio.get<List<dynamic>>(
+      '/reviews/ratings',
+      queryParameters: tripId != null ? {'trip_id': tripId} : null,
+    );
     return (response.data ?? [])
         .map((e) => RatingModel.fromJson(e as Map<String, dynamic>))
         .toList();

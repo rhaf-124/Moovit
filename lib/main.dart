@@ -155,7 +155,7 @@ class _MoovitAppState extends State<MoovitApp> {
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, state) {
           return MaterialApp.router(
-            title: 'Moovit',
+            title: 'VIPGo',
             debugShowCheckedModeBanner: false,
             themeMode: state.themeMode,
             theme: AppTheme.light,

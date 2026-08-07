@@ -27,10 +27,26 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthAuthenticated(user));
       await _registerFcmToken();
     } on DioException catch (e) {
+      final unverifiedEmail = _unverifiedEmailFrom(e);
+      if (unverifiedEmail != null) {
+        emit(AuthEmailUnverified(unverifiedEmail));
+        return;
+      }
       emit(AuthError(_parseDioError(e)));
     } catch (e) {
       emit(AuthError(e.toString()));
     }
+  }
+
+  /// Returns the account email when the backend rejected the login with
+  /// EMAIL_NOT_VERIFIED, otherwise null.
+  String? _unverifiedEmailFrom(DioException e) {
+    if (e.response?.statusCode != 403) return null;
+    final data = e.response?.data;
+    if (data is! Map) return null;
+    final detail = data['detail'];
+    if (detail is! Map || detail['code'] != 'EMAIL_NOT_VERIFIED') return null;
+    return detail['email'] as String?;
   }
 
   Future<void> register({
@@ -41,15 +57,13 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     emit(const AuthLoading());
     try {
-      await _repository.register(
+      final sentTo = await _repository.register(
         phone: phone,
         email: email,
         fullName: fullName,
         password: password,
       );
-      final user = await _repository.getMe();
-      emit(AuthAuthenticated(user));
-      await _registerFcmToken();
+      emit(AuthRegistrationEmailSent(sentTo));
     } on DioException catch (e) {
       emit(AuthError(_parseDioError(e)));
     } catch (e) {
@@ -89,8 +103,20 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final user = await _repository.getMe();
       emit(AuthAuthenticated(user));
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      if (code == 401 || code == 403) {
+        // Server explicitly rejected the token — it's genuinely invalid.
+        await _storage.clearTokens();
+        emit(const AuthUnauthenticated());
+      } else {
+        // Network error, timeout, or 5xx — tokens are likely still valid.
+        // Don't wipe the session; show unauthenticated so the user can retry,
+        // but keep the tokens so the next cold-start with connectivity succeeds.
+        emit(const AuthUnauthenticated());
+      }
     } catch (_) {
-      await _storage.clearTokens();
+      // Unexpected non-network error — same: preserve tokens.
       emit(const AuthUnauthenticated());
     }
   }

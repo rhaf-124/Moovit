@@ -1,6 +1,7 @@
 import 'package:bus_ticketing/features/auth/login/login_page.dart';
 import 'package:bus_ticketing/features/auth/phone/otp_verification_page.dart';
 import 'package:bus_ticketing/features/auth/register/sign_up_page.dart';
+import 'package:bus_ticketing/features/auth/register/verify_email_page.dart';
 import 'package:bus_ticketing/features/bus_search/models/booking_data.dart';
 import 'package:bus_ticketing/features/bus_search/models/bus_model.dart';
 import 'package:bus_ticketing/features/bus_search/models/bus_search_params.dart';
@@ -45,6 +46,7 @@ abstract final class AppRoutes {
   static const onboarding = '/onboarding';
   static const login = '/login';
   static const signUp = '/sign-up';
+  static const verifyEmail = '/verify-email';
   static const otpVerification = '/otp-verification';
   static const driverDashboard = '/driver/home';
   static const driverScan = '/driver/scan';
@@ -139,6 +141,14 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => _noTransitionPage(
         state: state,
         child: const SignUpPage(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.verifyEmail,
+      name: 'verify-email',
+      pageBuilder: (context, state) => _slidePage(
+        state: state,
+        child: VerifyEmailPage(email: state.extra as String),
       ),
     ),
     GoRoute(

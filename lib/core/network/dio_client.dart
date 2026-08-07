@@ -70,7 +70,16 @@ class _AuthInterceptor extends QueuedInterceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final isRetry = err.requestOptions.extra['_retry'] == true;
-    final isAuthPath = err.requestOptions.path.contains('/auth/');
+    // Only exclude endpoints that don't carry a session; session-backed
+    // /auth/ paths like /auth/me must still go through the refresh flow.
+    final path = err.requestOptions.path;
+    final isAuthPath = path.contains('/auth/refresh') ||
+        path.contains('/auth/login') ||
+        path.contains('/auth/register') ||
+        path.contains('/auth/accept-invite') ||
+        path.contains('/auth/forgot-password') ||
+        path.contains('/auth/verify-reset-otp') ||
+        path.contains('/auth/reset-password');
 
     if (err.response?.statusCode == 401 && !isRetry && !isAuthPath) {
       // Account deactivated — skip refresh, signal the app immediately.
@@ -113,11 +122,17 @@ class _AuthInterceptor extends QueuedInterceptor {
           final retryRes = await _dio.fetch<dynamic>(opts);
           return handler.resolve(retryRes);
         } catch (e) {
-          await _storage.clearTokens();
-          // Refresh itself returned 401 "inactive" — fire deactivated signal.
-          if (e is DioException && e.response?.statusCode == 401 &&
-              _isInactiveDetail(e)) {
-            _onDeactivated();
+          if (e is DioException) {
+            final code = e.response?.statusCode;
+            if (code == 401 || code == 403) {
+              // Refresh token is genuinely invalid — clear the session.
+              await _storage.clearTokens();
+              if (_isInactiveDetail(e)) {
+                _onDeactivated();
+              }
+            }
+            // Network error / timeout / 5xx during refresh: keep tokens.
+            // The original request will fail normally and the user can retry.
           }
         }
       }

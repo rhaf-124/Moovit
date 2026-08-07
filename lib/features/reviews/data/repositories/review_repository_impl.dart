@@ -15,7 +15,8 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }) => _dataSource.submitComplaint(tripId: tripId, subject: subject, description: description);
 
   @override
-  Future<List<ComplaintModel>> listComplaints() => _dataSource.listComplaints();
+  Future<List<ComplaintModel>> listComplaints({String? tripId}) =>
+      _dataSource.listComplaints(tripId: tripId);
 
   @override
   Future<RatingModel> submitRating({
@@ -31,5 +32,6 @@ class ReviewRepositoryImpl implements ReviewRepository {
   );
 
   @override
-  Future<List<RatingModel>> listRatings() => _dataSource.listRatings();
+  Future<List<RatingModel>> listRatings({String? tripId}) =>
+      _dataSource.listRatings(tripId: tripId);
 }

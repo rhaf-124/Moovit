@@ -143,9 +143,13 @@ class _SplashScreenState extends State<SplashScreen>
         hasSplashed = true;
 
         final state = cubit.state;
+        // Consume and immediately clear the pending path so it can't be
+        // replayed if the app somehow re-enters this code path.
+        final target = targetPathAfterSplash;
+        targetPathAfterSplash = null;
+
         if (state is AuthAuthenticated) {
           final user = state.user;
-          final target = targetPathAfterSplash;
           if (target != null &&
               target != AppRoutes.splash &&
               target != AppRoutes.onboarding &&
@@ -160,8 +164,7 @@ class _SplashScreenState extends State<SplashScreen>
             }
           }
         } else {
-          // Not authenticated
-          final target = targetPathAfterSplash;
+          // Not authenticated — only follow the pending path if it's a public route.
           final publicRoutes = [
             AppRoutes.onboarding,
             AppRoutes.login,
@@ -264,7 +267,7 @@ class _SplashScreenState extends State<SplashScreen>
                               child: Transform.scale(
                                 scale: _logoScale.value,
                                 child: Image.asset(
-                                  'assets/images/Moovit.png',
+                                  'assets/images/VIPGo.png',
                                   width: 108,
                                   height: 108,
                                   fit: BoxFit.contain,
@@ -285,7 +288,7 @@ class _SplashScreenState extends State<SplashScreen>
                           child: Column(
                             children: [
                               Text(
-                                'Moovit',
+                                'VIPGo',
                                 style: GoogleFonts.outfit(
                                   fontSize: 44,
                                   fontWeight: FontWeight.w700,

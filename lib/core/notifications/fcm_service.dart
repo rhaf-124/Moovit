@@ -123,12 +123,20 @@ class FcmService {
   }
 
   /// Navigate the app to the correct screen based on the notification [data].
+  ///
+  /// Called from three paths:
+  ///   • Foreground tap  → [_handlePayload] via [onDidReceiveNotificationResponse]
+  ///   • Background tap  → [_onMessageTap] via [onMessageOpenedApp]
+  ///   • Terminated tap  → [MoovitApp._handleColdStart] via [getInitialMessage]
+  ///
   /// Safe to call from any context — uses the global [appRouter].
   static void navigate(Map<String, dynamic> data) {
     final type = data['type'] as String?;
     if (type == null) return;
 
     switch (type) {
+      // ── Client notifications ───────────────────────────────────────────────
+
       case 'special_offer':
         appRouter.go(AppRoutes.home);
 
@@ -148,12 +156,17 @@ class FcmService {
       case 'trip_cancelled_client':
         appRouter.go(AppRoutes.tickets);
 
-      // Driver-targeted notifications
+      // ── Driver notifications ───────────────────────────────────────────────
+
+      // A new passenger booked / a ticket was scanned — show passenger list.
+      case 'new_passenger_booked':
+      case 'ticket_scanned_driver':
+        appRouter.go(AppRoutes.driverTickets);
+
+      // Trip assignment, cancellation, complaint — go to main driver dashboard.
       case 'trip_assigned':
       case 'trip_cancelled_driver':
-      case 'new_passenger_booked':
       case 'complaint_filed':
-      case 'ticket_scanned_driver':
         appRouter.go(AppRoutes.driverDashboard);
     }
   }
