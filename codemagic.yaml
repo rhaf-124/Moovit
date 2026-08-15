@@ -14,9 +14,9 @@ workflows:
       #   CM_KEY_ALIAS, CM_KEY_PASSWORD automatically.
       android_signing:
         - moovit_keystore
-      groups:
-        # Optional env-var group for Firebase if you move google-services.json out of repo
-        # - firebase_credentials
+      # Optional env-var group for Firebase if you move google-services.json out of repo
+      # groups:
+      #   - firebase_credentials
       vars:
         PACKAGE_NAME: "com.moovit.busticketing"
 
