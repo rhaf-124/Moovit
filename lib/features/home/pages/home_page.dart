@@ -1,3 +1,4 @@
+import 'package:features_tour/features_tour.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +21,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final _tourController = FeaturesTourController('ClientHome');
+
   DateTime _departureDate = DateTime.now();
   String _fromCity = 'From';
   String _toCity = 'To';
@@ -56,6 +59,14 @@ class _HomePageState extends State<HomePage> {
       _loadPopularRoutes();
       _loadSpecialOffers();
     });
+    _tourController.start(context);
+  }
+
+  Widget _tourTip(String text) {
+    return Text(
+      text,
+      style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
+    );
   }
 
   Future<void> _loadSpecialOffers() async {
@@ -157,22 +168,43 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                      child: _buildSearchCard(context, isDark, tt, cs),
+                      child: FeaturesTour(
+                        controller: _tourController,
+                        index: 0,
+                        introduce: _tourTip(
+                          'Search buses by picking your travel dates and cities, right from here.',
+                        ),
+                        child: _buildSearchCard(context, isDark, tt, cs),
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    _buildSectionHeader(
-                      context, tt, 'Popular Routes', 'View All',
-                      onActionTap: () => context.push(AppRoutes.search),
+                    FeaturesTour(
+                      controller: _tourController,
+                      index: 1,
+                      introduce: _tourTip(
+                        'See the most booked routes at a glance.',
+                      ),
+                      child: _buildSectionHeader(
+                        context, tt, 'Popular Routes', 'View All',
+                        onActionTap: () => context.push(AppRoutes.search),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildPopularRoutes(context, isDark, tt, cs),
                     const SizedBox(height: 24),
-                    _buildSectionHeader(
-                      context,
-                      tt,
-                      'Special Offers',
-                      'Limited Time',
-                      accentLabel: true,
+                    FeaturesTour(
+                      controller: _tourController,
+                      index: 2,
+                      introduce: _tourTip(
+                        "Don't miss out on limited-time discounts.",
+                      ),
+                      child: _buildSectionHeader(
+                        context,
+                        tt,
+                        'Special Offers',
+                        'Limited Time',
+                        accentLabel: true,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildSpecialOffers(context, tt),
@@ -278,17 +310,26 @@ class _HomePageState extends State<HomePage> {
                       ),
                 tooltip: 'Refresh',
               ),
-              IconButton(
-                onPressed: () {
-                  context.read<ThemeBloc>().add(const ThemeToggled());
-                },
-                icon: Icon(
-                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                  color: isDark
-                      ? AppColors.darkOnSurface
-                      : AppColors.lightOnSurface,
+              FeaturesTour(
+                controller: _tourController,
+                index: 3,
+                introduce: _tourTip(
+                  'Switch between light and dark mode anytime.',
                 ),
-                tooltip: 'Toggle Theme',
+                child: IconButton(
+                  onPressed: () {
+                    context.read<ThemeBloc>().add(const ThemeToggled());
+                  },
+                  icon: Icon(
+                    isDark
+                        ? Icons.light_mode_rounded
+                        : Icons.dark_mode_rounded,
+                    color: isDark
+                        ? AppColors.darkOnSurface
+                        : AppColors.lightOnSurface,
+                  ),
+                  tooltip: 'Toggle Theme',
+                ),
               ),
               IconButton(
                 onPressed: () {},

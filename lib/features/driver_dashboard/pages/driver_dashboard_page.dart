@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:features_tour/features_tour.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
@@ -75,6 +76,8 @@ class DriverDashboardPage extends StatefulWidget {
 }
 
 class _DriverDashboardPageState extends State<DriverDashboardPage> {
+  final _tourController = FeaturesTourController('DriverHome');
+
   bool _isOnline = false;
 
   bool _isLoading = true;
@@ -126,6 +129,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
           _isLoading = false;
         });
         _syncLocationTimer();
+        _tourController.start(context);
       }
     } catch (e) {
       if (mounted) {
@@ -293,6 +297,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
     }
   }
 
+  Widget _tourTip(String text) {
+    return Text(
+      text,
+      style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
+    );
+  }
+
   // ── Build ────────────────────────────────────────────────────────────────────
 
   @override
@@ -309,10 +320,17 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
           style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            onPressed: () => context.push(AppRoutes.myDriverReports),
-            icon: const Icon(Icons.report_problem_rounded),
-            tooltip: 'My Reports',
+          FeaturesTour(
+            controller: _tourController,
+            index: 2,
+            introduce: _tourTip(
+              'File and review your driver reports here.',
+            ),
+            child: IconButton(
+              onPressed: () => context.push(AppRoutes.myDriverReports),
+              icon: const Icon(Icons.report_problem_rounded),
+              tooltip: 'My Reports',
+            ),
           ),
           IconButton(
             onPressed: () {
@@ -323,10 +341,17 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
             ),
             tooltip: 'Toggle Theme',
           ),
-          IconButton(
-            onPressed: _loadTrips,
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh',
+          FeaturesTour(
+            controller: _tourController,
+            index: 3,
+            introduce: _tourTip(
+              'Pull to refresh or tap here to reload your trips.',
+            ),
+            child: IconButton(
+              onPressed: _loadTrips,
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Refresh',
+            ),
           ),
         ],
         elevation: 0,
@@ -346,7 +371,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
                       children: [
                         _buildProfileStatusCard(isDark, tt),
                         const SizedBox(height: 24),
-                        _buildStatsGrid(tt, isDark),
+                        FeaturesTour(
+                          controller: _tourController,
+                          index: 1,
+                          introduce: _tourTip(
+                            'Track your total, completed, and active trips at a glance.',
+                          ),
+                          child: _buildStatsGrid(tt, isDark),
+                        ),
                         const SizedBox(height: 24),
                         _buildLiveLocationBanner(isDark, tt),
                         const SizedBox(height: 24),
@@ -568,9 +600,16 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
                   ],
                 ),
               ),
-              Switch.adaptive(
-                value: _isOnline,
-                onChanged: (val) => setState(() => _isOnline = val),
+              FeaturesTour(
+                controller: _tourController,
+                index: 0,
+                introduce: _tourTip(
+                  "Toggle your availability so passengers and dispatch know when you're online.",
+                ),
+                child: Switch.adaptive(
+                  value: _isOnline,
+                  onChanged: (val) => setState(() => _isOnline = val),
+                ),
               ),
             ],
           ),
