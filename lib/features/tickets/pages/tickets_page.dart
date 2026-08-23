@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -24,16 +25,23 @@ class _TicketsPageState extends State<TicketsPage>
   List<ClientBooking> _bookings = [];
   bool _isLoading = true;
   String? _error;
+  Timer? _tickTimer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    // Re-evaluate hold expiry every second so "Pay Now"/"Expired" stay
+    // accurate even if the user just leaves this list open.
+    _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _tickTimer?.cancel();
     _tabController.dispose();
     super.dispose();
   }

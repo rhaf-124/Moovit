@@ -54,6 +54,13 @@ class BookingRemoteDataSource {
     return PaymentResponse.fromJson(response.data!);
   }
 
+  Future<PaymentResponse> requestRefund(String transactionRef) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/payments/refund/$transactionRef',
+    );
+    return PaymentResponse.fromJson(response.data!);
+  }
+
   Future<ConfirmedBookingResponse> getBooking(String bookingId) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/bookings/$bookingId',

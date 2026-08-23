@@ -20,6 +20,8 @@ abstract interface class BookingRepository {
 
   Future<PaymentResponse> verifyPayment(String transactionRef);
 
+  Future<PaymentResponse> requestRefund(String transactionRef);
+
   Future<ConfirmedBookingResponse> getBooking(String bookingId);
 
   Future<ClientBooking> getBookingDetails(String bookingId);

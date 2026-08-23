@@ -39,6 +39,10 @@ class BookingRepositoryImpl implements BookingRepository {
       _dataSource.verifyPayment(transactionRef);
 
   @override
+  Future<PaymentResponse> requestRefund(String transactionRef) =>
+      _dataSource.requestRefund(transactionRef);
+
+  @override
   Future<ConfirmedBookingResponse> getBooking(String bookingId) =>
       _dataSource.getBooking(bookingId);
 

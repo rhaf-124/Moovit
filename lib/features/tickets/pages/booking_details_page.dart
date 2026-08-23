@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,11 +30,23 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
   TripResponse? _trip;
   bool _isLoading = true;
   String? _error;
+  Timer? _tickTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    // Re-evaluate hold expiry every second so "Hold Expires"/"Pay Now" stay
+    // accurate even if the user just leaves this page open.
+    _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tickTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {

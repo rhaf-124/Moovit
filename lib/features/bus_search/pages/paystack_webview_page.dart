@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -180,9 +181,43 @@ class _PaystackWebviewPageState extends State<PaystackWebviewPage> {
 
 // ── Conflict sheet ────────────────────────────────────────────────────────────
 
-class _ConflictSheet extends StatelessWidget {
+class _ConflictSheet extends StatefulWidget {
   final String transactionRef;
   const _ConflictSheet({required this.transactionRef});
+
+  @override
+  State<_ConflictSheet> createState() => _ConflictSheetState();
+}
+
+class _ConflictSheetState extends State<_ConflictSheet> {
+  bool _isRequesting = false;
+  bool _refunded = false;
+  String? _error;
+
+  Future<void> _requestRefund() async {
+    setState(() {
+      _isRequesting = true;
+      _error = null;
+    });
+    try {
+      final repo = RepositoryProvider.of<BookingRepository>(context);
+      final result = await repo.requestRefund(widget.transactionRef);
+      if (!mounted) return;
+      setState(() => _refunded = result.status == 'refunded');
+    } catch (e) {
+      if (!mounted) return;
+      String msg = 'Refund request failed. Please contact support.';
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map && data['detail'] != null) {
+          msg = data['detail'].toString();
+        }
+      }
+      setState(() => _error = msg);
+    } finally {
+      if (mounted) setState(() => _isRequesting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -205,22 +240,36 @@ class _ConflictSheet extends StatelessWidget {
         Container(
           width: 72, height: 72,
           decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha:0.12),
+              color: (_refunded ? AppColors.success : AppColors.error)
+                  .withValues(alpha:0.12),
               shape: BoxShape.circle),
-          child: const Icon(Icons.error_outline_rounded,
-              color: AppColors.error, size: 40),
+          child: Icon(
+              _refunded
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.error_outline_rounded,
+              color: _refunded ? AppColors.success : AppColors.error,
+              size: 40),
         ),
         const SizedBox(height: 16),
-        Text('Reservation Expired',
+        Text(_refunded ? 'Refund Processed' : 'Reservation Expired',
             style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             textAlign: TextAlign.center),
         const SizedBox(height: 8),
         Text(
-          'Your seats were booked by someone else during checkout. '
-          'You will receive an automatic refund or contact support.',
+          _refunded
+              ? 'Your payment has been refunded. It may take a few days to '
+                'reflect on your card or account.'
+              : 'Your seats were booked by someone else during checkout, '
+                'but your payment went through. Request a refund below.',
           style: tt.bodyMedium?.copyWith(color: AppColors.grey500),
           textAlign: TextAlign.center,
         ),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          Text(_error!,
+              style: tt.bodySmall?.copyWith(color: AppColors.error),
+              textAlign: TextAlign.center),
+        ],
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(12),
@@ -237,26 +286,46 @@ class _ConflictSheet extends StatelessWidget {
                     children: [
               Text('Transaction Reference',
                   style: tt.labelSmall?.copyWith(color: AppColors.grey500)),
-              Text(transactionRef,
+              Text(widget.transactionRef,
                   style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
             ])),
           ]),
         ),
         const SizedBox(height: 24),
+        if (!_refunded)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isRequesting ? null : _requestRefund,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14))),
+              child: _isRequesting
+                  ? const SizedBox(
+                      width: 18, height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Text('Request Refund',
+                      style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        if (!_refunded) const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.go(AppRoutes.home);
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
+          child: OutlinedButton(
+            onPressed: _isRequesting
+                ? null
+                : () {
+                    Navigator.of(context).pop();
+                    context.go(AppRoutes.home);
+                  },
+            style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14))),
-            child: const Text('Back to Search',
-                style: TextStyle(color: Colors.white)),
+            child: const Text('Back to Search'),
           ),
         ),
       ]),
