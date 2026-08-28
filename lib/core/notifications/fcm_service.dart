@@ -20,6 +20,10 @@ class FcmService {
   final _messaging = FirebaseMessaging.instance;
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
+  /// Also declared in AndroidManifest.xml as
+  /// `com.google.firebase.messaging.default_notification_channel_id` so that
+  /// notifications the FCM SDK builds itself (app backgrounded or killed) land
+  /// on this same high-importance channel. Keep the two in sync.
   static const _channelId = 'bus_ticketing_high';
   static const _channelName = 'Bus Ticketing Notifications';
   static const _channelDesc = 'Bookings, trips, and special offers';
@@ -48,7 +52,7 @@ class FcmService {
 
     // Initialise flutter_local_notifications
     const initSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      android: AndroidInitializationSettings('@drawable/ic_stat_notification'),
       iOS: DarwinInitializationSettings(),
     );
     await _localNotifications.initialize(
@@ -105,7 +109,7 @@ class FcmService {
           channelDescription: _channelDesc,
           importance: Importance.high,
           priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/ic_stat_notification',
         ),
         iOS: const DarwinNotificationDetails(),
       ),
