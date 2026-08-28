@@ -115,6 +115,19 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
     return dep.year == now.year && dep.month == now.month && dep.day == now.day;
   }
 
+  /// A trip whose location the driver should be broadcasting.
+  ///
+  /// `halted` is included deliberately. A stopped bus - broken down, delayed,
+  /// held at a checkpoint - is exactly when dispatch most needs to see where it
+  /// is, and the admin tracking dashboard already lists halted trips and waits
+  /// on a GPS signal for them. Leaving it out froze those buses on the map.
+  bool _isTrackable(DriverTripModel t) =>
+      (t.status == TripStatus.inProgress ||
+          t.status == TripStatus.boarding ||
+          t.status == TripStatus.halted ||
+          t.status == TripStatus.scheduled) &&
+      _isTodayTrip(t);
+
   // ── Data loading ────────────────────────────────────────────────────────────
 
   Future<void> _loadTrips() async {
@@ -165,11 +178,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
   /// Starts/stops the 10-second location push depending on whether any trip
   /// is currently `in_progress`, `boarding`, or `scheduled` and is today.
   void _syncLocationTimer() {
-    final hasActive = _trips.any((t) =>
-        (t.status == TripStatus.inProgress ||
-            t.status == TripStatus.boarding ||
-            t.status == TripStatus.scheduled) &&
-        _isTodayTrip(t));
+    final hasActive = _trips.any(_isTrackable);
     if (hasActive && _locationTimer == null) {
       _startPositionStream();
       // Push straight away; otherwise the bus is invisible for the first 10s.
@@ -297,10 +306,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
     final repo = RepositoryProvider.of<DriverRepository>(context);
     final List<DriverTripModel> reassignedTrips = [];
     for (final trip in List.of(_trips)) {
-      if ((trip.status == TripStatus.inProgress ||
-              trip.status == TripStatus.boarding ||
-              trip.status == TripStatus.scheduled) &&
-          _isTodayTrip(trip)) {
+      if (_isTrackable(trip)) {
         try {
           await repo.updateTripLocation(
             tripId: trip.id,
@@ -875,11 +881,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
   }
 
   Widget _buildLiveLocationBanner(bool isDark, TextTheme tt) {
-    final hasActive = _trips.any((t) =>
-        (t.status == TripStatus.inProgress ||
-            t.status == TripStatus.boarding ||
-            t.status == TripStatus.scheduled) &&
-        _isTodayTrip(t));
+    final hasActive = _trips.any(_isTrackable);
     if (!hasActive) return const SizedBox.shrink();
 
     if (_locationPermissionDenied) {
@@ -1142,10 +1144,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
                     color: AppColors.primary,
                   ),
                 ),
-                if ((trip.status == TripStatus.inProgress ||
-                        trip.status == TripStatus.boarding ||
-                        trip.status == TripStatus.scheduled) &&
-                    _isTodayTrip(trip))
+                if (_isTrackable(trip))
                   Row(
                     children: [
                       Icon(Icons.circle,
