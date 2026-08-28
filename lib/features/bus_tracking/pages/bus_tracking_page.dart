@@ -24,8 +24,8 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
   LatLng? _destinationLatLng;
   bool _isLoading = true;
   String? _error;
-  DateTime? _lastUpdated;
   Timer? _pollTimer;
+  Timer? _tickTimer;
   final MapController _mapController = MapController();
 
   @override
@@ -33,6 +33,11 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchAndUpdate();
+      // Re-render on its own clock so the "reported Xs ago" label keeps
+      // counting up between polls instead of freezing.
+      _tickTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (mounted) setState(() {});
+      });
       _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
         _fetchAndUpdate();
       });
@@ -42,6 +47,7 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _tickTimer?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -60,7 +66,6 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
       setState(() {
         _location = loc;
         _destinationLatLng = destLatLng;
-        _lastUpdated = DateTime.now();
         _isLoading = false;
         _error = null;
       });
@@ -224,6 +229,7 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
   }
 
   Widget _buildMap(TripLiveLocation? loc) {
+    final busIsStale = loc?.isLocationStale ?? false;
     final busPos = (loc != null && loc.hasLocation)
         ? LatLng(loc.currentLatitude!, loc.currentLongitude!)
         : null;
@@ -260,20 +266,27 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
                   point: busPos,
                   width: 48,
                   height: 48,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha:0.4),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        )
-                      ],
+                  child: Opacity(
+                    // A stale fix is where the bus WAS. Drawing it exactly like
+                    // a live one makes a driver's dead phone look like a moving
+                    // bus, so it is greyed and faded instead.
+                    opacity: busIsStale ? 0.55 : 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: busIsStale ? AppColors.grey500 : AppColors.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (busIsStale ? AppColors.grey500 : AppColors.primary)
+                                .withValues(alpha: 0.4),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                          )
+                        ],
+                      ),
+                      child: const Icon(Icons.directions_bus_rounded,
+                          color: Colors.white, size: 26),
                     ),
-                    child: const Icon(Icons.directions_bus_rounded,
-                        color: Colors.white, size: 26),
                   ),
                 ),
               if (destPos != null)
@@ -355,23 +368,48 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
                   Text('Departs ${_fmtTime(loc.departureTime)}',
                       style: tt.bodySmall?.copyWith(color: subtle)),
                 ]),
-                if (_lastUpdated != null)
+                // Freshness of the DRIVER's last report, not of our poll. The
+                // old label showed when this screen last fetched, which stayed
+                // green and current even after the bus stopped reporting.
+                if (loc.hasLocation)
                   Row(children: [
-                    Icon(Icons.sync_rounded, size: 12, color: AppColors.success),
+                    Icon(
+                      loc.isLocationStale
+                          ? Icons.cloud_off_rounded
+                          : Icons.sync_rounded,
+                      size: 12,
+                      color: loc.isLocationStale
+                          ? AppColors.warning
+                          : AppColors.success,
+                    ),
                     const SizedBox(width: 3),
                     Text(
-                      'Updated ${_fmtTime(_lastUpdated!)}',
+                      loc.isLocationStale
+                          ? 'Last seen ${loc.locationAgeLabel}'
+                          : 'Live · ${loc.locationAgeLabel}',
                       style: tt.bodySmall?.copyWith(
-                          color: AppColors.success, fontSize: 11),
+                        color: loc.isLocationStale
+                            ? AppColors.warning
+                            : AppColors.success,
+                        fontSize: 11,
+                      ),
                     ),
                   ]),
               ],
             ),
           ],
           const SizedBox(height: 8),
-          Text('Updates every 10 seconds',
-              style: tt.bodySmall?.copyWith(
-                  color: AppColors.grey400, fontSize: 11)),
+          Text(
+            loc != null && loc.isLocationStale
+                ? "This is the bus's last known position. The driver's device "
+                    'has stopped reporting.'
+                : 'Updates every 10 seconds',
+            style: tt.bodySmall?.copyWith(
+                color: loc != null && loc.isLocationStale
+                    ? AppColors.warning
+                    : AppColors.grey400,
+                fontSize: 11),
+          ),
         ],
       ),
     );
