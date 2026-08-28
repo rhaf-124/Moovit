@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/router/safe_back.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../bus_search/domain/repositories/booking_repository.dart';
 import '../../bus_search/domain/repositories/trip_repository.dart';
@@ -234,11 +235,14 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    // Reachable straight from a notification tap, which replaces the stack.
+    return SafeBackScope(
+      fallback: AppRoutes.tickets,
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(AppRoutes.tickets),
         ),
         title: Text(
           'Booking Details',
@@ -274,6 +278,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                           )
                       : null,
                 ),
+      ),
     );
   }
 }

@@ -88,6 +88,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
   // Live location state
   Timer? _locationTimer;
   bool _locationPermissionDenied = false;
+  // Kept fresh by a position stream so a push never has to wait on a fix.
+  StreamSubscription<Position>? _positionSub;
+  Position? _lastPosition;
 
   @override
   void initState() {
@@ -98,6 +101,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
   @override
   void dispose() {
     _locationTimer?.cancel();
+    _positionSub?.cancel();
     super.dispose();
   }
 
@@ -163,12 +167,59 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
             t.status == TripStatus.scheduled) &&
         _isTodayTrip(t));
     if (hasActive && _locationTimer == null) {
+      _startPositionStream();
+      // Push straight away; otherwise the bus is invisible for the first 10s.
+      _pushLocationForActiveTrips();
       _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) {
         _pushLocationForActiveTrips();
       });
     } else if (!hasActive) {
       _locationTimer?.cancel();
       _locationTimer = null;
+      _positionSub?.cancel();
+      _positionSub = null;
+    }
+  }
+
+  /// Keeps [_lastPosition] current.
+  ///
+  /// A one-shot getCurrentPosition() per tick was unreliable: a high-accuracy
+  /// fix regularly takes longer than the 8s limit on a cold GPS or indoors, so
+  /// it threw TimeoutException every cycle and no location was ever sent. A
+  /// stream gets a fix once and then delivers updates as the bus moves.
+  void _startPositionStream() {
+    if (_positionSub != null) return;
+    _positionSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // metres
+      ),
+    ).listen(
+      (pos) => _lastPosition = pos,
+      onError: (Object e) => debugPrint('[Location] Stream error: $e'),
+    );
+  }
+
+  /// Best available fix, cheapest first: the live stream, then the OS cache,
+  /// then a direct request with a limit generous enough to actually succeed.
+  Future<Position?> _resolvePosition() async {
+    if (_lastPosition != null) return _lastPosition;
+    try {
+      final cached = await Geolocator.getLastKnownPosition();
+      if (cached != null) return cached;
+    } catch (_) {
+      // Not fatal - fall through to an explicit request.
+    }
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 30),
+        ),
+      );
+    } catch (e) {
+      debugPrint('[Location] Could not get position: $e');
+      return null;
     }
   }
 
@@ -197,18 +248,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
     }
 
     // 3. Get real GPS position
-    Position position;
-    try {
-      position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
-        ),
-      );
-    } catch (e) {
-      debugPrint('[Location] Could not get position: $e');
-      return;
-    }
+    _startPositionStream();
+    final position = await _resolvePosition();
+    if (position == null) return;
 
     // 4. Push to backend for every active trip
     if (!mounted) return;

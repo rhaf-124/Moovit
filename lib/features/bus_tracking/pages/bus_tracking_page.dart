@@ -3,9 +3,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/router/app_router.dart';
+import '../../../core/router/safe_back.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../bus_search/domain/repositories/trip_repository.dart';
 import '../../bus_search/models/trip_live_location.dart';
@@ -146,11 +147,14 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final loc = _location;
 
-    return Scaffold(
-      appBar: AppBar(
+    // Reachable straight from a notification tap, which replaces the stack.
+    return SafeBackScope(
+      fallback: AppRoutes.tickets,
+      child: Scaffold(
+        appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(AppRoutes.tickets),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,6 +198,7 @@ class _BusTrackingPageState extends State<BusTrackingPage> {
                     _buildInfoCard(loc, tt, isDark),
                   ],
                 ),
+      ),
     );
   }
 
