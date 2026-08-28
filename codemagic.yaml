@@ -1,24 +1,85 @@
+# Codemagic CI for VIPGo (com.vipgo.app)
+#
+# Prerequisite (one-time, in the Codemagic UI):
+#   Teams > Integrations > Code signing identities > Android keystores
+#   Upload vipgo-upload.jks with its passwords and alias, and name the
+#   reference `vipgo_keystore`. Codemagic then injects, per build:
+#     CM_KEYSTORE_PATH, CM_KEYSTORE_PASSWORD, CM_KEY_ALIAS, CM_KEY_PASSWORD
+#   Those are read by android/app/build.gradle.kts via key.properties below.
+
+definitions:
+  env_versions: &env_versions
+    flutter: stable
+    java: 17
+
+  signing: &signing
+    android_signing:
+      - vipgo_keystore
+
+  cache: &cache
+    cache_paths:
+      - $HOME/.pub-cache
+      - $HOME/.gradle/caches
+      - $FLUTTER_ROOT/.pub-cache
+
+  write_key_properties: &write_key_properties
+    name: Write key.properties for Gradle signing
+    script: |
+      set -e
+      if [ -z "$CM_KEYSTORE_PATH" ]; then
+        echo "CM_KEYSTORE_PATH is empty - the 'vipgo_keystore' code signing"
+        echo "identity is not attached to this workflow. Refusing to build an"
+        echo "unsigned release."
+        exit 1
+      fi
+      cat > "$CM_BUILD_DIR/android/key.properties" <<KEYS
+      storePassword=$CM_KEYSTORE_PASSWORD
+      keyPassword=$CM_KEY_PASSWORD
+      keyAlias=$CM_KEY_ALIAS
+      storeFile=$CM_KEYSTORE_PATH
+      KEYS
+
+  pub_get: &pub_get
+    name: Get Flutter packages
+    script: flutter pub get
+
+  analyze: &analyze
+    name: Analyze
+    script: flutter analyze --no-fatal-infos
+
+  unit_tests: &unit_tests
+    name: Run tests
+    script: flutter test
+
+  verify_signature: &verify_signature
+    name: Verify the artifact is signed with the upload key
+    script: |
+      set -e
+      SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/programs/android-sdk-macosx}}"
+      APKSIGNER=$(find "$SDK/build-tools" -name apksigner | sort -r | head -n 1)
+      for apk in $(find build -name "*.apk"); do
+        echo "== $apk"
+        "$APKSIGNER" verify --print-certs "$apk" | grep -i "SHA-256 digest" || true
+      done
+      for aab in $(find build -name "*.aab"); do
+        echo "== $aab"
+        jarsigner -verify -verbose:summary "$aab" | tail -n 3
+      done
+
 workflows:
+
+  # ---------------------------------------------------------------------------
+  # Signed release APK for internal / QA distribution. Installable directly.
+  # ---------------------------------------------------------------------------
   android-apk-testing:
     name: Android APK (Testing)
     max_build_duration: 60
     instance_type: mac_mini_m2
-
     environment:
-      flutter: stable
-      java: 17
-      # Reference the keystore you upload in Codemagic UI →
-      # Teams > Integrations > Code signing identities > Android keystores
-      # Name it "moovit_keystore"; Codemagic will inject:
-      #   CM_KEYSTORE, CM_KEYSTORE_PATH, CM_KEYSTORE_PASSWORD,
-      #   CM_KEY_ALIAS, CM_KEY_PASSWORD automatically.
-      android_signing:
-        - moovit_keystore
-      # Optional env-var group for Firebase if you move google-services.json out of repo
-      # groups:
-      #   - firebase_credentials
+      <<: [*env_versions, *signing]
       vars:
-        PACKAGE_NAME: "com.moovit.busticketing"
+        PACKAGE_NAME: "com.vipgo.app"
+    cache: *cache
 
     triggering:
       events:
@@ -30,34 +91,84 @@ workflows:
           source: true
 
     scripts:
-      - name: Write key.properties for Gradle signing
-        script: |
-          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          storeFile=$CM_KEYSTORE_PATH
-          EOF
-
-      - name: Get Flutter packages
-        script: flutter pub get
-
-      - name: Analyze
-        script: flutter analyze --no-fatal-infos
-
-      - name: Run tests
-        script: flutter test
-
-      - name: Build release APK
+      - *write_key_properties
+      - *pub_get
+      - *analyze
+      - *unit_tests
+      - name: Build release APK (split per ABI)
         script: |
           flutter build apk --release \
+            --split-per-abi \
             --build-name=1.0.$PROJECT_BUILD_NUMBER \
             --build-number=$PROJECT_BUILD_NUMBER
+      - *verify_signature
 
     artifacts:
       - build/**/outputs/**/*.apk
-      - build/**/outputs/**/mapping.txt   # ProGuard/R8 mapping (useful for crash reports)
+      - build/**/outputs/**/mapping.txt   # R8 mapping - needed to read crash traces
+      - build/**/outputs/**/native-debug-symbols.zip
       - flutter_drive.log
+
+    publishing:
+      email:
+        recipients:
+          - projectatu123@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # ---------------------------------------------------------------------------
+  # Signed App Bundle for the Play Console. Upload build/app/outputs/bundle/
+  # release/app-release.aab manually, plus mapping.txt under
+  # Release > App bundle explorer > Downloads if Play does not pick it up.
+  # Triggered by pushing a tag like v1.0.0.
+  # ---------------------------------------------------------------------------
+  android-aab-release:
+    name: Android App Bundle (Play release)
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    environment:
+      <<: [*env_versions, *signing]
+      vars:
+        PACKAGE_NAME: "com.vipgo.app"
+    cache: *cache
+
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+
+    scripts:
+      - *write_key_properties
+      - *pub_get
+      - *analyze
+      - *unit_tests
+      - name: Derive the version from the git tag
+        script: |
+          set -e
+          # v1.2.3 -> build-name 1.2.3; build number is the monotonic CI counter.
+          VERSION_NAME=$(echo "$CM_TAG" | sed 's/^v//')
+          echo "VERSION_NAME=$VERSION_NAME"
+          echo "VERSION_NAME=$VERSION_NAME" >> $CM_ENV
+      - name: Build release App Bundle
+        script: |
+          flutter build appbundle --release \
+            --build-name=$VERSION_NAME \
+            --build-number=$PROJECT_BUILD_NUMBER
+      - name: Build a universal APK from the bundle for smoke testing
+        script: |
+          flutter build apk --release \
+            --build-name=$VERSION_NAME \
+            --build-number=$PROJECT_BUILD_NUMBER
+      - *verify_signature
+
+    artifacts:
+      - build/**/outputs/bundle/**/*.aab
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/mapping.txt
+      - build/**/outputs/**/native-debug-symbols.zip
 
     publishing:
       email:

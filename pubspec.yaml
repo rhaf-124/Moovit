@@ -16,6 +16,9 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
+# versionName+versionCode. Bump the name for user-visible releases; the build
+# number must strictly increase for every artifact uploaded to Play and is
+# overridden in CI by --build-number (see codemagic.yaml).
 version: 1.0.0+1
 
 environment:
@@ -67,6 +70,21 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   device_preview: ^1.2.0
+  flutter_launcher_icons: ^0.14.3
+
+# Launcher icons. The files under android/app/src/main/res/mipmap-* are
+# committed and are what ships; this config exists so they can be regenerated
+# when assets/images/VIPGo.png changes:
+#   flutter pub get && dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/images/VIPGo.png"
+  android: "ic_launcher"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/VIPGo.png"
+  # Keeps the QR corner of the mark inside every launcher mask shape.
+  adaptive_icon_foreground_inset: 21
+  min_sdk_android: 24
+  ios: false
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

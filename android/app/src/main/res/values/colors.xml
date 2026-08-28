@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Adaptive launcher icon background. Matches the white field of the
+         VIPGo mark so the tile blends into every launcher mask shape. -->
+    <color name="ic_launcher_background">#FFFFFFFF</color>
+    <!-- Window background shown while the Flutter engine warms up. -->
+    <color name="launch_background">#FFFFFFFF</color>
+    <!-- Accent colour applied to FCM notification icons. VIPGo red. -->
+    <color name="notification_color">#FFD61D18</color>
+</resources>

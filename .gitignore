@@ -4,6 +4,7 @@
 # Android signing — never commit these
 android/key.properties
 *.jks
+*.jks.*
 *.keystore
 
 # Miscellaneous
@@ -58,3 +59,6 @@ app.*.map.json
 .vscode/
 # Wildcard to catch any Windows absolute path that ends up here
 C:*/
+
+# Temp build helpers created by tooling
+_cc_*.bat

@@ -10,15 +10,22 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Load key.properties for local signing; falls back to Codemagic env vars in CI
+// Release signing material comes from android/key.properties locally, or from the
+// CM_* environment variables Codemagic injects for the uploaded keystore.
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
+fun signingValue(key: String, env: String): String? =
+    keystoreProperties.getProperty(key) ?: System.getenv(env)
+
+val releaseStoreFile = signingValue("storeFile", "CM_KEYSTORE_PATH")
+val hasReleaseSigning = releaseStoreFile != null && file(releaseStoreFile).exists()
+
 android {
-    namespace = "com.moovit.busticketing"
+    namespace = "com.vipgo.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -33,29 +40,51 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-                ?: System.getenv("CM_KEY_ALIAS")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-                ?: System.getenv("CM_KEY_PASSWORD")
-            storeFile = (keystoreProperties.getProperty("storeFile")
-                ?: System.getenv("CM_KEYSTORE_PATH"))?.let { file(it) }
-            storePassword = keystoreProperties.getProperty("storePassword")
-                ?: System.getenv("CM_KEYSTORE_PASSWORD")
+        if (hasReleaseSigning) {
+            create("release") {
+                keyAlias = signingValue("keyAlias", "CM_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "CM_KEY_PASSWORD")
+                storeFile = file(releaseStoreFile!!)
+                storePassword = signingValue("storePassword", "CM_KEYSTORE_PASSWORD")
+            }
         }
     }
 
     defaultConfig {
-        applicationId = "com.moovit.busticketing"
+        applicationId = "com.vipgo.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Native multidex support. Harmless on minSdk >= 21 (ART splits dex natively),
+        // required once the app + Firebase/ML Kit exceed the 64K method limit.
+        multiDexEnabled = true
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                // Lets `flutter build apk --release` work on a machine without the
+                // keystore. Such a build is NOT uploadable to Play.
+                logger.warn("WARNING: no release keystore found - signing release with the debug key.")
+                signingConfigs.getByName("debug")
+            }
+
+            // Shrink, obfuscate and strip unused resources with R8.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+
+            // Upload native debug symbols so Play Console can symbolicate NDK crashes.
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
         }
     }
 }
@@ -66,4 +95,7 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Material Components - required by the MaterialComponents launch/normal themes.
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.multidex:multidex:2.0.1")
 }
