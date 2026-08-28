@@ -142,8 +142,12 @@ Outputs:
 
 | Workflow | Trigger | Produces |
 | --- | --- | --- |
-| `android-apk-testing` | push / PR to `main` | signed split APKs |
+| `android-apk-testing` | push / PR to `main` | signed universal APK + signed `.aab` |
 | `android-aab-release` | pushing a tag matching `v*` | signed `.aab` + universal APK |
+
+The testing workflow builds a **universal** APK (all ABIs in one file) so it
+installs on any device without picking a matching split. Play always gets the
+`.aab`, which does per-device ABI splitting properly.
 
 Cut a release with:
 

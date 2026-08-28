@@ -69,10 +69,11 @@ definitions:
 workflows:
 
   # ---------------------------------------------------------------------------
-  # Signed release APK for internal / QA distribution. Installable directly.
+  # Every push to main: a signed universal APK for QA plus a signed .aab, so a
+  # Play-uploadable bundle is always available without having to cut a tag.
   # ---------------------------------------------------------------------------
   android-apk-testing:
-    name: Android APK (Testing)
+    name: Android APK + AAB (Testing)
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
@@ -95,16 +96,24 @@ workflows:
       - *pub_get
       - *analyze
       - *unit_tests
-      - name: Build release APK (split per ABI)
+      # Universal APK: one file carrying every ABI, so it installs on any
+      # device without having to pick the matching split. Larger, but this
+      # artifact is only for QA - Play gets the .aab from the release workflow.
+      - name: Build release APK (universal)
         script: |
           flutter build apk --release \
-            --split-per-abi \
+            --build-name=1.0.$PROJECT_BUILD_NUMBER \
+            --build-number=$PROJECT_BUILD_NUMBER
+      - name: Build release App Bundle
+        script: |
+          flutter build appbundle --release \
             --build-name=1.0.$PROJECT_BUILD_NUMBER \
             --build-number=$PROJECT_BUILD_NUMBER
       - *verify_signature
 
     artifacts:
       - build/**/outputs/**/*.apk
+      - build/**/outputs/bundle/**/*.aab
       - build/**/outputs/**/mapping.txt   # R8 mapping - needed to read crash traces
       - build/**/outputs/**/native-debug-symbols.zip
       - flutter_drive.log
