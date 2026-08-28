@@ -131,9 +131,16 @@ class _MoovitAppState extends State<MoovitApp> {
   /// If the app was launched by tapping an FCM notification while terminated,
   /// getInitialMessage() returns it so we can navigate to the right screen.
   Future<void> _handleColdStart() async {
-    final message = await FcmService.instance.getInitialMessage();
-    if (message != null) {
-      FcmService.navigate(message.data);
+    // Best-effort: a missing or failed Firebase init must not take down the
+    // first frame. Without this the app crashes on launch wherever
+    // Firebase.initializeApp() did not succeed.
+    try {
+      final message = await FcmService.instance.getInitialMessage();
+      if (message != null) {
+        FcmService.navigate(message.data);
+      }
+    } catch (e) {
+      debugPrint('Cold-start FCM check skipped: $e');
     }
   }
 

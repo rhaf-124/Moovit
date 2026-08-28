@@ -17,7 +17,10 @@ class FcmService {
   FcmService._();
   static final FcmService instance = FcmService._();
 
-  final _messaging = FirebaseMessaging.instance;
+  // Lazy: touching FcmService.instance must not reach into Firebase before
+  // Firebase.initializeApp() has run. A field initializer would, which throws
+  // [core/no-app] in widget tests and on any device where Firebase init failed.
+  late final _messaging = FirebaseMessaging.instance;
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
   /// Also declared in AndroidManifest.xml as
