@@ -1,182 +1,122 @@
 # Codemagic CI for VIPGo (com.vipgo.app)
 #
+# One workflow builds both artifacts:
+#   - a universal APK  -> sideload onto any device for QA
+#   - an App Bundle    -> upload to the Play Console
+#
 # Prerequisite (one-time, in the Codemagic UI):
 #   Teams > Integrations > Code signing identities > Android keystores
-#   Upload vipgo-upload.jks with its passwords and alias, and name the
-#   reference `vipgo_keystore`. Codemagic then injects, per build:
+#   Upload vipgo-upload.jks with its password and alias `vipgo-upload`, and
+#   name the reference `vipgo_keystore`. Codemagic then injects, per build:
 #     CM_KEYSTORE_PATH, CM_KEYSTORE_PASSWORD, CM_KEY_ALIAS, CM_KEY_PASSWORD
 #   Those are read by android/app/build.gradle.kts via key.properties below.
 
-definitions:
-  env_versions: &env_versions
-    flutter: stable
-    java: 17
-
-  signing: &signing
-    android_signing:
-      - vipgo_keystore
-
-  cache: &cache
-    cache_paths:
-      - $HOME/.pub-cache
-      - $HOME/.gradle/caches
-      - $FLUTTER_ROOT/.pub-cache
-
-  write_key_properties: &write_key_properties
-    name: Write key.properties for Gradle signing
-    script: |
-      set -e
-      if [ -z "$CM_KEYSTORE_PATH" ]; then
-        echo "CM_KEYSTORE_PATH is empty - the 'vipgo_keystore' code signing"
-        echo "identity is not attached to this workflow. Refusing to build an"
-        echo "unsigned release."
-        exit 1
-      fi
-      cat > "$CM_BUILD_DIR/android/key.properties" <<KEYS
-      storePassword=$CM_KEYSTORE_PASSWORD
-      keyPassword=$CM_KEY_PASSWORD
-      keyAlias=$CM_KEY_ALIAS
-      storeFile=$CM_KEYSTORE_PATH
-      KEYS
-
-  pub_get: &pub_get
-    name: Get Flutter packages
-    script: flutter pub get
-
-  analyze: &analyze
-    name: Analyze
-    script: flutter analyze --no-fatal-infos
-
-  unit_tests: &unit_tests
-    name: Run tests
-    script: flutter test
-
-  verify_signature: &verify_signature
-    name: Verify the artifact is signed with the upload key
-    script: |
-      set -e
-      SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/programs/android-sdk-macosx}}"
-      APKSIGNER=$(find "$SDK/build-tools" -name apksigner | sort -r | head -n 1)
-      for apk in $(find build -name "*.apk"); do
-        echo "== $apk"
-        "$APKSIGNER" verify --print-certs "$apk" | grep -i "SHA-256 digest" || true
-      done
-      for aab in $(find build -name "*.aab"); do
-        echo "== $aab"
-        jarsigner -verify -verbose:summary "$aab" | tail -n 3
-      done
-
 workflows:
 
-  # ---------------------------------------------------------------------------
-  # Every push to main: a signed universal APK for QA plus a signed .aab, so a
-  # Play-uploadable bundle is always available without having to cut a tag.
-  # ---------------------------------------------------------------------------
-  android-apk-testing:
-    name: Android APK + AAB (Testing)
-    max_build_duration: 60
+  android-release:
+    name: Android APK + AAB
+    max_build_duration: 90
     instance_type: mac_mini_m2
+
     environment:
-      <<: [*env_versions, *signing]
+      flutter: stable
+      java: 17
+      android_signing:
+        - vipgo_keystore
       vars:
         PACKAGE_NAME: "com.vipgo.app"
-    cache: *cache
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
 
     triggering:
       events:
         - push
         - pull_request
+        - tag
       branch_patterns:
         - pattern: main
           include: true
           source: true
-
-    scripts:
-      - *write_key_properties
-      - *pub_get
-      - *analyze
-      - *unit_tests
-      # Universal APK: one file carrying every ABI, so it installs on any
-      # device without having to pick the matching split. Larger, but this
-      # artifact is only for QA - Play gets the .aab from the release workflow.
-      - name: Build release APK (universal)
-        script: |
-          flutter build apk --release \
-            --build-name=1.0.$PROJECT_BUILD_NUMBER \
-            --build-number=$PROJECT_BUILD_NUMBER
-      - name: Build release App Bundle
-        script: |
-          flutter build appbundle --release \
-            --build-name=1.0.$PROJECT_BUILD_NUMBER \
-            --build-number=$PROJECT_BUILD_NUMBER
-      - *verify_signature
-
-    artifacts:
-      - build/**/outputs/**/*.apk
-      - build/**/outputs/bundle/**/*.aab
-      - build/**/outputs/**/mapping.txt   # R8 mapping - needed to read crash traces
-      - build/**/outputs/**/native-debug-symbols.zip
-      - flutter_drive.log
-
-    publishing:
-      email:
-        recipients:
-          - projectatu123@gmail.com
-        notify:
-          success: true
-          failure: true
-
-  # ---------------------------------------------------------------------------
-  # Signed App Bundle for the Play Console. Upload build/app/outputs/bundle/
-  # release/app-release.aab manually, plus mapping.txt under
-  # Release > App bundle explorer > Downloads if Play does not pick it up.
-  # Triggered by pushing a tag like v1.0.0.
-  # ---------------------------------------------------------------------------
-  android-aab-release:
-    name: Android App Bundle (Play release)
-    max_build_duration: 90
-    instance_type: mac_mini_m2
-    environment:
-      <<: [*env_versions, *signing]
-      vars:
-        PACKAGE_NAME: "com.vipgo.app"
-    cache: *cache
-
-    triggering:
-      events:
-        - tag
       tag_patterns:
         - pattern: 'v*'
           include: true
 
     scripts:
-      - *write_key_properties
-      - *pub_get
-      - *analyze
-      - *unit_tests
-      - name: Derive the version from the git tag
+      - name: Write key.properties for Gradle signing
         script: |
           set -e
-          # v1.2.3 -> build-name 1.2.3; build number is the monotonic CI counter.
-          VERSION_NAME=$(echo "$CM_TAG" | sed 's/^v//')
-          echo "VERSION_NAME=$VERSION_NAME"
+          if [ -z "$CM_KEYSTORE_PATH" ]; then
+            echo "CM_KEYSTORE_PATH is empty - the 'vipgo_keystore' code signing"
+            echo "identity is not attached to this workflow. Refusing to build an"
+            echo "unsigned release."
+            exit 1
+          fi
+          cat > "$CM_BUILD_DIR/android/key.properties" <<KEYS
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          KEYS
+
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Analyze
+        script: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        script: flutter test
+
+      - name: Resolve the version
+        script: |
+          set -e
+          # A v* tag drives the version name; otherwise fall back to the CI
+          # counter. The build number is always the monotonic CI counter, which
+          # is what Play requires to strictly increase.
+          if [ -n "$CM_TAG" ]; then
+            VERSION_NAME=$(echo "$CM_TAG" | sed 's/^v//')
+          else
+            VERSION_NAME="1.0.$PROJECT_BUILD_NUMBER"
+          fi
+          echo "Building $VERSION_NAME ($PROJECT_BUILD_NUMBER)"
           echo "VERSION_NAME=$VERSION_NAME" >> $CM_ENV
+
+      # Universal APK: every ABI in one file, so it installs on any device
+      # without having to match a per-ABI split. Larger, but QA-only.
+      - name: Build release APK (universal)
+        script: |
+          flutter build apk --release \
+            --build-name=$VERSION_NAME \
+            --build-number=$PROJECT_BUILD_NUMBER
+
+      # The artifact Play actually wants; it splits per device on Google's side.
       - name: Build release App Bundle
         script: |
           flutter build appbundle --release \
             --build-name=$VERSION_NAME \
             --build-number=$PROJECT_BUILD_NUMBER
-      - name: Build a universal APK from the bundle for smoke testing
+
+      - name: Verify both artifacts are signed with the upload key
         script: |
-          flutter build apk --release \
-            --build-name=$VERSION_NAME \
-            --build-number=$PROJECT_BUILD_NUMBER
-      - *verify_signature
+          set -e
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/programs/android-sdk-macosx}}"
+          APKSIGNER=$(find "$SDK/build-tools" -name apksigner | sort -r | head -n 1)
+          for apk in $(find build -name "*.apk"); do
+            echo "== $apk"
+            "$APKSIGNER" verify --print-certs "$apk" | grep -i "SHA-256 digest" || true
+          done
+          for aab in $(find build -name "*.aab"); do
+            echo "== $aab"
+            jarsigner -verify -verbose:summary "$aab" | tail -n 3
+          done
 
     artifacts:
-      - build/**/outputs/bundle/**/*.aab
       - build/**/outputs/**/*.apk
-      - build/**/outputs/**/mapping.txt
+      - build/**/outputs/bundle/**/*.aab
+      - build/**/outputs/**/mapping.txt   # R8 mapping - needed to read crash traces
       - build/**/outputs/**/native-debug-symbols.zip
 
     publishing:

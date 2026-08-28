@@ -140,14 +140,20 @@ Outputs:
 
 ### On Codemagic
 
-| Workflow | Trigger | Produces |
-| --- | --- | --- |
-| `android-apk-testing` | push / PR to `main` | signed universal APK + signed `.aab` |
-| `android-aab-release` | pushing a tag matching `v*` | signed `.aab` + universal APK |
+A single workflow, `android-release`, builds **both** artifacts every run:
 
-The testing workflow builds a **universal** APK (all ABIs in one file) so it
-installs on any device without picking a matching split. Play always gets the
-`.aab`, which does per-device ABI splitting properly.
+| Artifact | Use |
+| --- | --- |
+| `app-release.apk` (universal, all ABIs) | sideload onto any device for QA |
+| `app-release.aab` | upload to the Play Console |
+
+| Trigger | Version name |
+| --- | --- |
+| push / PR to `main` | `1.0.$PROJECT_BUILD_NUMBER` |
+| tag matching `v*` | the tag, minus the leading `v` |
+
+The build number is always Codemagic's monotonic `$PROJECT_BUILD_NUMBER`, which
+is what Play requires to strictly increase between uploads.
 
 Cut a release with:
 
@@ -155,8 +161,8 @@ Cut a release with:
 git tag v1.0.0 && git push origin v1.0.0
 ```
 
-The tag drives `--build-name`; `--build-number` comes from Codemagic's
-monotonic `$PROJECT_BUILD_NUMBER`.
+Every run also verifies both artifacts carry the upload key's SHA-256 and
+archives `mapping.txt` and the native debug symbols.
 
 ---
 
