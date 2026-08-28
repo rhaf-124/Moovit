@@ -10,6 +10,19 @@
     <!-- Android 13+ runtime permission for FCM and local notifications. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- Continuous trip tracking. The driver dashboard runs geolocator's
+         GeolocatorLocationService (declared by the plugin with
+         foregroundServiceType="location") so location keeps flowing while the
+         app is backgrounded or the screen is off.
+
+         ACCESS_BACKGROUND_LOCATION is deliberately NOT requested: the service
+         is always started while the driver has the dashboard open, which is
+         all a location-typed foreground service needs. Asking for it would
+         also trigger Play's background-location review. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
     <!-- Declared explicitly as optional. Without these, requesting the CAMERA and
          location permissions makes Play treat the hardware as required and hides
          the app from devices that lack it. -->

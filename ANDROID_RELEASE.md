@@ -205,6 +205,44 @@ Play rejects a bundle whose versionCode is not higher than the last one uploaded
 
 ---
 
+## 7. Driver live-location tracking
+
+While a driver has a trip that is `scheduled`, `boarding` or `in_progress`
+**today**, the dashboard holds a `getPositionStream()` subscription and pushes
+to `PATCH /driver/trips/{id}/location` on movement (10 m) and on a 10-second
+heartbeat, whichever comes first.
+
+On Android the stream runs inside geolocator's `GeolocatorLocationService`,
+which the plugin declares with `foregroundServiceType="location"`. That keeps
+location flowing when the driver leaves the dashboard or locks the phone;
+without it Android suspends the app and tracking stops mid-trip. The driver
+sees an ongoing "Sharing your trip location" notification for as long as it
+runs — that notification is not optional, it is what makes the foreground
+service legal.
+
+Permissions this needs, all in the app manifest:
+`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` (Android 14+), `WAKE_LOCK`.
+
+`ACCESS_BACKGROUND_LOCATION` is deliberately **not** requested. The service is
+always started while the driver has the dashboard open, which is all a
+location-typed foreground service requires, and asking for it would trigger
+Play's background-location review — a written justification plus a
+demonstration video.
+
+If tracking is not appearing on the passenger map, check in this order:
+
+1. The trip's `departure_time` is **today** — `_isTodayTrip` gates everything.
+2. Trip status is scheduled / boarding / in_progress; the backend rejects
+   anything else with 400.
+3. Location permission is granted and location services are on.
+4. The ongoing notification is showing. If it is not, the service never
+   started.
+5. `current_latitude` / `current_longitude` on the trip row are non-null. If
+   they are null, nothing arrived; if they are set, the problem is on the
+   passenger side, not the driver side.
+
+---
+
 ## 7. Release FAQ / troubleshooting
 
 **A feature works in debug but crashes or silently no-ops in release.**

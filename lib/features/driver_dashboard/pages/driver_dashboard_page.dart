@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:features_tour/features_tour.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
@@ -91,6 +92,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
   // Kept fresh by a position stream so a push never has to wait on a fix.
   StreamSubscription<Position>? _positionSub;
   Position? _lastPosition;
+  DateTime? _lastPushedAt;
+
+  static const _pushInterval = Duration(seconds: 10);
 
   @override
   void initState() {
@@ -178,6 +182,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
       _locationTimer = null;
       _positionSub?.cancel();
       _positionSub = null;
+      _lastPushedAt = null;
     }
   }
 
@@ -190,13 +195,48 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
   void _startPositionStream() {
     if (_positionSub != null) return;
     _positionSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
+      locationSettings: _locationSettings(),
+    ).listen(
+      (pos) {
+        _lastPosition = pos;
+        // Push on movement as well as on the timer. Once the app is
+        // backgrounded the timer is the less dependable of the two, while the
+        // foreground service keeps this stream delivering.
+        final since = _lastPushedAt == null
+            ? null
+            : DateTime.now().difference(_lastPushedAt!);
+        if (since == null || since >= _pushInterval) {
+          _pushLocationForActiveTrips();
+        }
+      },
+      onError: (Object e) => debugPrint('[Location] Stream error: $e'),
+    );
+  }
+
+  /// On Android, run the stream inside geolocator's location-typed foreground
+  /// service. Without it Android suspends the app once the driver leaves the
+  /// dashboard or locks the phone, and tracking silently stops mid-trip. The
+  /// ongoing notification it posts is what makes that legal and visible.
+  LocationSettings _locationSettings() {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return AndroidSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10, // metres
-      ),
-    ).listen(
-      (pos) => _lastPosition = pos,
-      onError: (Object e) => debugPrint('[Location] Stream error: $e'),
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: 'Sharing your trip location',
+          notificationText:
+              'Passengers can see your bus on the live map while a trip is active.',
+          notificationChannelName: 'Live trip location',
+          notificationIcon:
+              AndroidResource(name: 'ic_stat_notification', defType: 'drawable'),
+          enableWakeLock: true,
+          setOngoing: true,
+        ),
+      );
+    }
+    return const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10, // metres
     );
   }
 
@@ -267,6 +307,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage> {
             latitude: position.latitude,
             longitude: position.longitude,
           );
+          _lastPushedAt = DateTime.now();
           debugPrint('[Location] Pushed (${position.latitude.toStringAsFixed(5)}, '
               '${position.longitude.toStringAsFixed(5)}) for trip ${trip.id}');
         } catch (e) {
