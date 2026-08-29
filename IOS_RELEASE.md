@@ -156,6 +156,20 @@ keychain (`flutter_secure_storage`), both exempt under Apple's rules.
 **Revisit this declaration if custom cryptography is ever added** — it is a
 legal statement, not a build flag.
 
+### App icons must not have an alpha channel
+
+App Store validation rejects any app icon carrying an alpha channel — **even a
+fully opaque one** — with error 90717, and only reports it *after* the archive
+has been built and uploaded. All 15 icons in
+`ios/Runner/Assets.xcassets/AppIcon.appiconset/` were RGBA and have been
+flattened onto white and re-encoded as RGB.
+
+`flutter_launcher_icons` is set to `ios: false`; the iOS set is maintained by
+hand. If that is ever turned on, set `remove_alpha_ios: true`.
+
+The `ios-testflight` workflow's first step checks every icon's PNG colour type
+and fails in seconds rather than after a ten-minute round trip.
+
 ### Deployment target
 
 `IPHONEOS_DEPLOYMENT_TARGET` is **15.5**, set on the three project-level build

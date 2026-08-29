@@ -84,6 +84,9 @@ flutter_launcher_icons:
   # Keeps the QR corner of the mark inside every launcher mask shape.
   adaptive_icon_foreground_inset: 21
   min_sdk_android: 24
+  # iOS icons are maintained by hand in ios/Runner/Assets.xcassets. If you
+  # ever turn this on, set `remove_alpha_ios: true` — App Store validation
+  # rejects any icon with an alpha channel (error 90717). See IOS_RELEASE.md.
   ios: false
 
 # For information on the generic Dart part of this file, see the

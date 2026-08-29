@@ -175,7 +175,7 @@ workflows:
           include: true
 
     scripts:
-      - name: Fail early if GoogleService-Info.plist is missing
+      - name: Preflight config and icon checks
         script: |
           set -e
           # firebase_options.dart is what actually initializes Firebase, but the
@@ -188,6 +188,24 @@ workflows:
             echo "       --ios-bundle-id=com.vipgo.app"
             exit 1
           fi
+
+          # App Store validation rejects any app icon carrying an alpha channel
+          # (error 90717), even a fully opaque one - and only says so after the
+          # build has been archived and uploaded, which is ~10 minutes in. PNG
+          # colour type lives at a fixed offset in IHDR; 4 and 6 have alpha.
+          python3 - <<'ICONS'
+          import glob, sys
+          bad = []
+          for f in glob.glob('ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png'):
+              if open(f, 'rb').read(26)[25] in (4, 6):
+                  bad.append(f)
+          if bad:
+              print('App icons carry an alpha channel; App Store will reject them:')
+              for f in sorted(bad):
+                  print('  ' + f)
+              sys.exit(1)
+          print('app icons: no alpha channel')
+          ICONS
 
       - name: Get Flutter packages
         script: flutter pub get
