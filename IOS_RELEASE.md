@@ -156,6 +156,24 @@ keychain (`flutter_secure_storage`), both exempt under Apple's rules.
 **Revisit this declaration if custom cryptography is ever added** — it is a
 legal statement, not a build flag.
 
+### Purpose strings
+
+Every sensitive API the binary *links* needs a purpose string in `Info.plist`,
+whether or not the feature is reachable at runtime — Apple scans the compiled
+binary, including code inside plugins. A missing one is **ITMS-90683**: the
+upload succeeds, processing then discards the build, and the only notice is an
+email. The build never appears in TestFlight.
+
+| Key | Why |
+|---|---|
+| `NSCameraUsageDescription` | `mobile_scanner`, driver ticket scanning |
+| `NSPhotoLibraryUsageDescription` | `image_picker`, profile photos |
+| `NSLocationWhenInUseUsageDescription` | `geolocator`, live trip tracking |
+| `NSLocationAlwaysAndWhenInUseUsageDescription` | as above |
+
+Adding a plugin that touches the microphone, contacts, calendar, Bluetooth or
+motion sensors means adding its key too, *before* the next upload.
+
 ### App icons must not have an alpha channel
 
 App Store validation rejects any app icon carrying an alpha channel — **even a

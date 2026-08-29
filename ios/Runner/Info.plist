@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Purpose strings are mandatory for any API the binary links, even if
+	     the feature is optional at runtime. A missing one is ITMS-90683:
+	     the upload succeeds and processing then discards the build. -->
+	<!-- mobile_scanner, on the driver ticket-scanning screen. -->
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to scan passenger ticket QR codes.</string>
+	<!-- image_picker, for profile and vehicle photos. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Your photo library is used to choose a profile picture.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your location is shared with passengers while a trip is in progress.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
