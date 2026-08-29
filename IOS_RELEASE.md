@@ -145,6 +145,20 @@ automatically.
 correct — `xcode-project use-profiles` rewrites it to `production` during the
 TestFlight export.
 
+### Deployment target
+
+`IPHONEOS_DEPLOYMENT_TARGET` is **15.5**, set on the three project-level build
+configurations (the Runner target inherits it). It is not an arbitrary choice:
+`mobile_scanner` declares `s.platform = :ios, '15.5.0'`, and `pod install`
+refuses to resolve below it. Every other plugin needs 13.0 or lower, so 15.5 is
+the floor rather than a preference.
+
+Do not lower it without checking the podspecs first:
+
+```bash
+grep -r "s.platform.*:ios" ~/.pub-cache/hosted/pub.dev/*/ios/*.podspec
+```
+
 ---
 
 ## 3. Backend payload requirements
