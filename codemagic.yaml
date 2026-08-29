@@ -1,10 +1,14 @@
 # Codemagic CI for VIPGo (com.vipgo.app)
 #
-# One workflow builds both artifacts:
+# android-release builds both Android artifacts:
 #   - a universal APK  -> sideload onto any device for QA
 #   - an App Bundle    -> upload to the Play Console
 #
-# Prerequisite (one-time, in the Codemagic UI):
+# ios-testflight builds a signed IPA and ships it to TestFlight.
+# Its one-time Apple-side prerequisites are in IOS_RELEASE.md - the workflow
+# cannot create the App ID or enable Push Notifications on it.
+#
+# Android prerequisite (one-time, in the Codemagic UI):
 #   Teams > Integrations > Code signing identities > Android keystores
 #   Upload vipgo-upload.jks with its password and alias `vipgo-upload`, and
 #   name the reference `vipgo_keystore`. Codemagic then injects, per build:
@@ -126,3 +130,168 @@ workflows:
         notify:
           success: true
           failure: true
+
+  ios-testflight:
+    name: iOS IPA + TestFlight
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    # Name of the App Store Connect API key registered under
+    # Codemagic > Team settings > Integrations > Developer Portal.
+    # Must match that name exactly. Workflow-level, NOT under environment.
+    integrations:
+      app_store_connect: "VIPGo App Store Connect"
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        # CERTIFICATE_PRIVATE_KEY - the RSA key Apple issues the distribution
+        # certificate against. Generate it once and store it as a secure var;
+        # reusing it matters, because Apple caps an account at a small number
+        # of distribution certificates and a fresh key each build burns them.
+        - appstore_credentials
+      vars:
+        BUNDLE_ID: "com.vipgo.app"
+        XCODE_WORKSPACE: "Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+
+    scripts:
+      - name: Fail early if GoogleService-Info.plist is missing
+        script: |
+          set -e
+          # firebase_options.dart is what actually initializes Firebase, but the
+          # plist is what `flutterfire configure` drops in alongside it. If it is
+          # absent, the iOS Firebase client was never registered and push will
+          # silently never deliver - better to fail here than ship a dead build.
+          if [ ! -f ios/Runner/GoogleService-Info.plist ]; then
+            echo "ios/Runner/GoogleService-Info.plist is missing."
+            echo "Run: flutterfire configure --project=busticketing-8a775 \\"
+            echo "       --ios-bundle-id=com.vipgo.app"
+            exit 1
+          fi
+
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Analyze
+        script: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        script: flutter test
+
+      # `flutter build ipa` generates the Podfile and pod-installs on its own,
+      # but doing it up front surfaces dependency conflicts as their own step.
+      - name: Install CocoaPods dependencies
+        script: |
+          set -e
+          flutter precache --ios
+          find . -name "Podfile" -execdir pod install \;
+
+      # --create makes Apple issue the distribution certificate and the App
+      # Store profile when they do not exist yet. The declarative ios_signing
+      # block only fetches what is already there, which fails with "No matching
+      # profiles found" on a bundle ID that has never been signed.
+      #
+      # What this CANNOT do: register the App ID, or add the Push Notifications
+      # capability to it. Both are one-time manual steps in the Developer
+      # portal, and the profile fetched here only carries `aps-environment` if
+      # the capability was enabled on the identifier first.
+      - name: Fetch or create signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Load signing files into the build keychain
+        script: |
+          keychain initialize
+          keychain add-certificates
+
+      # Applies the profile to the Xcode project and writes
+      # /Users/builder/export_options.plist for the archive export. This is also
+      # what flips aps-environment from `development` to `production`.
+      - name: Apply signing profiles to Xcode project
+        script: xcode-project use-profiles
+
+      - name: Resolve the version
+        script: |
+          set -e
+          if [ -n "$CM_TAG" ]; then
+            VERSION_NAME=$(echo "$CM_TAG" | sed 's/^v//')
+          else
+            VERSION_NAME="1.0.$PROJECT_BUILD_NUMBER"
+          fi
+          echo "Building $VERSION_NAME ($PROJECT_BUILD_NUMBER)"
+          echo "VERSION_NAME=$VERSION_NAME" >> $CM_ENV
+
+      # The build number must strictly increase - App Store Connect permanently
+      # rejects a (version, build) pair it has already seen, even for a deleted
+      # build. PROJECT_BUILD_NUMBER is Codemagic's monotonic per-app counter.
+      - name: Build signed IPA
+        script: |
+          flutter build ipa --release \
+            --build-name=$VERSION_NAME \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+
+      - name: Verify the IPA is push-capable
+        script: |
+          set -e
+          IPA=$(find build/ios/ipa -name "*.ipa" | head -n 1)
+          echo "== $IPA"
+          WORK=$(mktemp -d) && unzip -q "$IPA" -d "$WORK"
+          APP=$(find "$WORK/Payload" -maxdepth 1 -name "*.app" | head -n 1)
+
+          # An IPA that signed cleanly but lost aps-environment installs and runs
+          # fine while never receiving a single notification. Catch it here.
+          codesign -d --entitlements :- "$APP" 2>/dev/null | grep -A1 aps-environment \
+            || { echo "aps-environment MISSING - Push Notifications is not enabled"; \
+                 echo "on the App ID in the Apple Developer portal."; exit 1; }
+
+          # `flutterfire configure` run on Windows drops GoogleService-Info.plist
+          # on disk but cannot run the Ruby xcodeproj step that adds it to the
+          # Runner target, so the file silently never reaches the bundle. The
+          # earlier existence check does not catch that - only this one does.
+          test -f "$APP/GoogleService-Info.plist" \
+            || { echo "GoogleService-Info.plist is not in the app bundle."; \
+                 echo "It exists in ios/Runner but is not registered in the"; \
+                 echo "Runner target's Resources build phase."; exit 1; }
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - build/ios/archive/Runner.xcarchive/dSYMs/**/*   # symbolicates crashes
+
+    publishing:
+      email:
+        recipients:
+          - projectatu123@gmail.com
+        notify:
+          success: true
+          failure: true
+
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # Testers get assigned by hand in App Store Connect > TestFlight once a
+        # build finishes processing. To automate it, list beta_groups here naming
+        # groups that ALREADY exist - Codemagic fails the publish step otherwise.

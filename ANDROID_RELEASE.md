@@ -43,8 +43,9 @@ Still worth doing:
    UPDATE users SET fcm_token = NULL;
    ```
 
-> The iOS app is intentionally still `com.moovit.busticketing`. Changing it means a
-> new App Store record and a new Firebase iOS client, so it is a separate decision.
+> iOS was renamed to `com.vipgo.app` to match, before the first TestFlight upload —
+> after that the bundle ID is welded to the App Store record forever. This needs a
+> matching iOS client in Firebase; see `IOS_RELEASE.md`.
 
 ## 2. Signing
 

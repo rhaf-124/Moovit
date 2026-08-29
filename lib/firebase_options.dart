@@ -56,13 +56,12 @@ class DefaultFirebaseOptions {
     projectId: 'busticketing-8a775',
     storageBucket: 'busticketing-8a775.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBtq-LBWO4RJuIWAsI9BcrCCm1CEkUzJGk',
-    appId: '1:96693944842:ios:41cc5fdac46ae5aa1595f3',
+    appId: '1:96693944842:ios:619e5dcea84a823f1595f3',
     messagingSenderId: '96693944842',
     projectId: 'busticketing-8a775',
     storageBucket: 'busticketing-8a775.firebasestorage.app',
-    iosBundleId: 'com.moovit.busticketing',
+    iosBundleId: 'com.vipgo.app',
   );
 }

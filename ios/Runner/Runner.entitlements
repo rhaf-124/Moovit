@@ -6,5 +6,9 @@
 	<array>
 		<string>applinks:bus-ticketing-backend-u0e3.onrender.com</string>
 	</array>
+	<!-- Xcode's "Push Notifications" capability. Stays `development` here;
+	     the App Store / TestFlight export rewrites it to `production`. -->
+	<key>aps-environment</key>
+	<string>development</string>
 </dict>
 </plist>
