@@ -217,8 +217,22 @@ workflows:
       # the capability was enabled on the identifier first.
       - name: Fetch or create signing files
         script: |
+          set -e
+          # app-store-connect picks CERTIFICATE_PRIVATE_KEY up implicitly, and
+          # when it is missing fails deep inside with "Cannot save Signing
+          # Certificates without certificate private key", which does not name
+          # the variable. Check it here so the cause is obvious.
+          if [ -z "$CERTIFICATE_PRIVATE_KEY" ]; then
+            echo "CERTIFICATE_PRIVATE_KEY is empty."
+            echo "The 'appstore_credentials' environment group is not attached"
+            echo "to this workflow, or does not contain that variable."
+            echo "See IOS_RELEASE.md section 1.6."
+            exit 1
+          fi
+          # Passed explicitly rather than relying on the implicit env lookup.
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key @env:CERTIFICATE_PRIVATE_KEY \
             --create
 
       - name: Load signing files into the build keychain
