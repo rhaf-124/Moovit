@@ -134,6 +134,7 @@ Clients re-register on next launch via `AuthCubit` → `POST /auth/fcm-token`.
 | Token registration / clearing | `AuthCubit` → `POST/DELETE /auth/fcm-token` |
 | `aps-environment` (push capability) | `ios/Runner/Runner.entitlements` |
 | `UIBackgroundModes: remote-notification` | `ios/Runner/Info.plist` |
+| `ITSAppUsesNonExemptEncryption` (export compliance) | `ios/Runner/Info.plist` |
 | Entitlements wired to Debug/Release/Profile | `ios/Runner.xcodeproj/project.pbxproj` |
 | `GoogleService-Info.plist` in the Resources build phase | `ios/Runner.xcodeproj/project.pbxproj` |
 
@@ -144,6 +145,16 @@ automatically.
 `aps-environment` is `development` in the checked-in entitlements. That is
 correct — `xcode-project use-profiles` rewrites it to `production` during the
 TestFlight export.
+
+### Export compliance
+
+`ITSAppUsesNonExemptEncryption` is `false`, answered in `Info.plist` so
+TestFlight does not hold every build waiting on the question before testers can
+install. The app uses encryption only for HTTPS (`dio` over TLS) and the iOS
+keychain (`flutter_secure_storage`), both exempt under Apple's rules.
+
+**Revisit this declaration if custom cryptography is ever added** — it is a
+legal statement, not a build flag.
 
 ### Deployment target
 

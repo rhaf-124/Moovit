@@ -30,6 +30,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Export compliance, answered here so TestFlight does not hold every
+	     build waiting on the question. The app uses encryption only for
+	     HTTPS (dio over TLS) and the iOS keychain (flutter_secure_storage),
+	     both exempt. Revisit this if custom cryptography is ever added. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
