@@ -103,6 +103,10 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final user = await _repository.getMe();
       emit(AuthAuthenticated(user));
+      // Cold start on an already-authenticated session still has to register.
+      // Without this the backend only ever learns the token from the one login
+      // that happened to succeed, and never recovers if that one failed.
+      await _registerFcmToken();
     } on DioException catch (e) {
       final code = e.response?.statusCode;
       if (code == 401 || code == 403) {
@@ -164,16 +168,20 @@ class AuthCubit extends Cubit<AuthState> {
   /// Gets the current FCM token and registers it with the backend.
   /// Also subscribes to token refreshes so the backend stays in sync.
   Future<void> _registerFcmToken() async {
+    // Subscribed before the await, not after it. getToken() can fail on iOS
+    // when the APNs handshake has not completed; with the subscription behind
+    // the await, that failure also skipped the listener, so the token FCM
+    // delivers moments later was dropped and the session never registered at
+    // all. This ordering makes the refresh the recovery path.
+    _fcmRefreshSub?.cancel();
+    _fcmRefreshSub = FcmService.instance.onTokenRefresh.listen((newToken) {
+      _repository.registerFcmToken(newToken).ignore();
+    });
     try {
       final token = await FcmService.instance.getToken();
       if (token != null) {
         await _repository.registerFcmToken(token);
       }
-      // Subscribe to future token rotations
-      _fcmRefreshSub?.cancel();
-      _fcmRefreshSub = FcmService.instance.onTokenRefresh.listen((newToken) {
-        _repository.registerFcmToken(newToken).ignore();
-      });
     } catch (_) {
       // FCM registration failure must never block login
     }

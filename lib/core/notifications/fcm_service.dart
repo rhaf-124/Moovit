@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../router/app_router.dart';
@@ -85,7 +86,33 @@ class FcmService {
   }
 
   /// Returns the current FCM registration token for this device.
-  Future<String?> getToken() => _messaging.getToken();
+  ///
+  /// On iOS this is not immediate. FCM cannot mint a registration token until
+  /// Apple has handed the app its APNs device token, and until that arrives
+  /// `getToken()` throws `[firebase_messaging/apns-token-not-set]`. The
+  /// handshake typically lands a second or two after `requestPermission`, so
+  /// any caller that runs straight after login races it — and on a first launch
+  /// it usually loses. Wait for the APNs token instead of throwing; a null
+  /// return tells the caller to leave the backend's token untouched.
+  ///
+  /// Android has no such step, which is why push worked there and not on iOS.
+  Future<String?> getToken() async {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      if (await _awaitApnsToken() == null) return null;
+    }
+    return _messaging.getToken();
+  }
+
+  /// Polls for the APNs device token for up to ~10s. Null means Apple never
+  /// delivered one — no network, push not provisioned, or a Simulator.
+  Future<String?> _awaitApnsToken() async {
+    for (var attempt = 0; attempt < 10; attempt++) {
+      final apns = await _messaging.getAPNSToken();
+      if (apns != null) return apns;
+      await Future<void>.delayed(const Duration(seconds: 1));
+    }
+    return null;
+  }
 
   /// Emits whenever FCM rotates the token. AuthCubit subscribes to this to
   /// keep the backend updated.
