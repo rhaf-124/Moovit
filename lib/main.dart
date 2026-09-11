@@ -81,21 +81,21 @@ void main() async {
             create: (_) => AuthCubit(authRepository, tokenStorage),
           ),
         ],
-        child: const MoovitApp(),
+        child: const VIPGoApp(),
       ),
     ),
     ),
   );
 }
 
-class MoovitApp extends StatefulWidget {
-  const MoovitApp({super.key});
+class VIPGoApp extends StatefulWidget {
+  const VIPGoApp({super.key});
 
   @override
-  State<MoovitApp> createState() => _MoovitAppState();
+  State<VIPGoApp> createState() => _VIPGoAppState();
 }
 
-class _MoovitAppState extends State<MoovitApp> {
+class _VIPGoAppState extends State<VIPGoApp> {
   StreamSubscription<void>? _deactivatedSub;
 
   @override
@@ -112,7 +112,7 @@ class _MoovitAppState extends State<MoovitApp> {
 
     final dlm = DeepLinkManager.instance;
     dlm.onLinkReceived = (uri) {
-      debugPrint('Deep Link received in MoovitApp: $uri');
+      debugPrint('Deep Link received in VIPGoApp: $uri');
       if (uri.path == '/accept-invite') {
         final token = uri.queryParameters['token'];
         if (token != null && token.isNotEmpty) {

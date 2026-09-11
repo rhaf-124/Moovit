@@ -252,18 +252,10 @@ class _HomePageState extends State<HomePage> {
 
           return Row(
             children: [
-              Container(
+              Image.asset(
+                'assets/images/VIPGo.png',
                 width: 52,
                 height: 52,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.directions_bus_rounded,
-                  color: Colors.white,
-                  size: 28,
-                ),
               ),
               const SizedBox(width: 14),
               Expanded(

@@ -225,30 +225,10 @@ class _LoginPageState extends State<LoginPage>
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // App Logo / Icon
-                        Container(
-                          height: 80,
+                        Image.asset(
+                          "assets/images/VIPGo.png",
                           width: 80,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.blue.shade600,
-                                Colors.indigo.shade700,
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.shade200,
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            "assets/images/VIPGo.png",
-                            width: 40,
-                            height: 40,
-                          ),
+                          height: 80,
                         ),
                         const SizedBox(height: 24),
 

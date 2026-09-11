@@ -161,7 +161,7 @@ class FcmService {
   /// Called from three paths:
   ///   • Foreground tap  → [_handlePayload] via [onDidReceiveNotificationResponse]
   ///   • Background tap  → [_onMessageTap] via [onMessageOpenedApp]
-  ///   • Terminated tap  → [MoovitApp._handleColdStart] via [getInitialMessage]
+  ///   • Terminated tap  → [VIPGoApp._handleColdStart] via [getInitialMessage]
   ///
   /// Safe to call from any context — uses the global [appRouter].
   static void navigate(Map<String, dynamic> data) {

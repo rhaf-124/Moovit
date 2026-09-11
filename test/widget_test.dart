@@ -58,7 +58,7 @@ void main() {
               create: (_) => AuthCubit(authRepository, tokenStorage),
             ),
           ],
-          child: const MoovitApp(),
+          child: const VIPGoApp(),
         ),
       ),
     );
@@ -68,6 +68,6 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     await tester.pump(); // settle follow-up frames
 
-    expect(find.byType(MoovitApp), findsOneWidget);
+    expect(find.byType(VIPGoApp), findsOneWidget);
   });
 }

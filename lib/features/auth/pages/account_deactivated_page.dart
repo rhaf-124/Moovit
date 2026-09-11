@@ -8,7 +8,7 @@ import '../../../core/theme/app_colors.dart';
 class AccountDeactivatedPage extends StatelessWidget {
   const AccountDeactivatedPage({super.key});
 
-  static const _supportEmail = 'support@moovit.com';
+  static const _supportEmail = 'support@vipogo.online';
 
   void _copyEmail(BuildContext context) {
     Clipboard.setData(const ClipboardData(text: _supportEmail));

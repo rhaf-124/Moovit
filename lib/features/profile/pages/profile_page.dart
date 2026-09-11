@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/error_formatter.dart';
@@ -139,7 +140,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       letterSpacing: 0.8,
                       fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
-              _dialogContactRow(Icons.email_outlined, 'support@moovit.gh', tt),
+              _dialogContactRow(Icons.email_outlined, 'support@vipogo.online', tt),
               const SizedBox(height: 8),
               _dialogContactRow(
                   Icons.phone_outlined, '+233 30 000 0000', tt),
@@ -198,120 +199,21 @@ class _ProfilePageState extends State<ProfilePage> {
     ]);
   }
 
-  void _showPrivacyPolicy(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tt = Theme.of(context).textTheme;
-    final bg = isDark ? AppColors.darkSurface : AppColors.white;
-    final border = isDark ? AppColors.darkOutline : AppColors.lightOutline;
-    final subtle = isDark
-        ? AppColors.darkOnSurfaceVariant
-        : AppColors.lightOnSurfaceVariant;
-
-    const sections = [
-      (
-        'Data We Collect',
-        'We collect your name, phone number, email address, and location data (when you grant permission) to provide our bus ticketing services.'
-      ),
-      (
-        'How We Use Your Data',
-        'Your data is used to process bookings, send ticket confirmations, and improve app performance. We do not sell your personal information to third parties.'
-      ),
-      (
-        'Data Sharing',
-        'We share necessary booking details with bus operators to fulfil your trip. Payment data is processed securely by our payment partners.'
-      ),
-      (
-        'Data Retention',
-        'We retain your booking history for 12 months. You may request deletion of your account data at any time by contacting support.'
-      ),
-      (
-        'Your Rights',
-        'You have the right to access, correct, or delete the personal data we hold about you. Contact us at support@moovit.gh to exercise these rights.'
-      ),
-      (
-        'Contact',
-        'For privacy concerns, reach us at privacy@moovit.gh or +233 30 000 0000.'
-      ),
-    ];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: bg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: border, width: isDark ? 1 : 0.5),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.indigo.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.shield_outlined,
-                    color: Colors.indigo, size: 28),
-              ),
-              const SizedBox(height: 16),
-              Text('Privacy Policy',
-                  style: tt.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 4),
-              Text('Last updated: June 2026',
-                  style: tt.bodySmall?.copyWith(color: subtle)),
-              const SizedBox(height: 16),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 320),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: sections
-                        .map((s) => Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: 14),
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(s.$1,
-                                      style: tt.bodyMedium?.copyWith(
-                                          fontWeight: FontWeight.w700)),
-                                  const SizedBox(height: 4),
-                                  Text(s.$2,
-                                      style: tt.bodySmall?.copyWith(
-                                          color: subtle, height: 1.5)),
-                                ],
-                              ),
-                            ))
-                        .toList(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
-                  ),
-                  child: const Text('Close',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ],
+  Future<void> _showPrivacyPolicy(BuildContext context) async {
+    final url = Uri.parse('https://vipogo.online/privacy');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open privacy policy'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
           ),
-        ),
-      ),
-    );
+        );
+      }
+    }
   }
 
   void _showAbout(BuildContext context) {

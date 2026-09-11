@@ -121,7 +121,7 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
                       fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               _contactRow(
-                  Icons.email_outlined, 'driver-support@moovit.gh', tt),
+                  Icons.email_outlined, 'driver-support@vipogo.online', tt),
               const SizedBox(height: 8),
               _contactRow(Icons.phone_outlined, '+233 30 000 0001', tt),
               const SizedBox(height: 20),
@@ -207,7 +207,7 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
       ),
       (
         'Your Rights',
-        'You have the right to access, correct, or delete your personal data. Contact us at privacy@moovit.gh.'
+        'You have the right to access, correct, or delete your personal data. Contact us at privacy@vipogo.online.'
       ),
     ];
 
