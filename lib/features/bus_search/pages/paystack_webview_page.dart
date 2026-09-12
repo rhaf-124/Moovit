@@ -53,6 +53,7 @@ class _PaystackWebviewPageState extends State<PaystackWebviewPage> {
     setState(() => _verifying = true);
     final ref = widget.data.paymentResponse?.transactionRef ?? '';
     try {
+      await Future.delayed(const Duration(milliseconds: 500));
       final repo = RepositoryProvider.of<BookingRepository>(context);
       final paymentResult = await repo.verifyPayment(ref);
       if (!mounted) return;
