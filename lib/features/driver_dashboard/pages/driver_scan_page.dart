@@ -69,27 +69,53 @@ class _DriverScanPageState extends State<DriverScanPage>
     }
   }
 
+  String _formatDateTime(DateTime dt) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final t = dt.toLocal();
+    final hour = t.hour.toString().padLeft(2, '0');
+    final minute = t.minute.toString().padLeft(2, '0');
+    return '${t.day} ${months[t.month - 1]} at $hour:$minute';
+  }
+
   String _friendlyError(Object e) {
-    String msg;
+    String msg = '';
+    String? detailRaw;
+    DateTime? scanTime;
+
     if (e is DioException) {
       final data = e.response?.data;
-      final detail = data is Map ? data['detail'] : null;
-      if (detail is String) {
-        msg = detail.toLowerCase();
+      if (data is Map) {
+        final detail = data['detail'];
+        if (detail is String) {
+          detailRaw = detail;
+          msg = detail.toLowerCase();
+        }
+        final timeStr = (data['boarded_at'] ?? data['scanned_at']) as String?;
+        if (timeStr != null) {
+          scanTime = DateTime.tryParse(timeStr);
+        }
+      } else if (data is String) {
+        detailRaw = data;
+        msg = data.toLowerCase();
       } else if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
         return 'No connection. Check your internet and try again.';
-      } else {
-        msg = '';
       }
     } else {
       msg = e.toString().toLowerCase();
     }
 
     if (msg.contains('already') || msg.contains('boarded')) {
-      return 'This ticket has already been scanned.';
+      if (scanTime != null) {
+        return 'Ticket already scanned at ${_formatDateTime(scanTime)}.';
+      }
+      if (detailRaw != null && detailRaw.isNotEmpty) {
+        return detailRaw;
+      }
+      return 'Ticket already scanned.';
     }
     if (msg.contains('not in boarding') || msg.contains('in-progress')) {
       return 'This trip has not started boarding yet.';
@@ -120,13 +146,9 @@ class _DriverScanPageState extends State<DriverScanPage>
 
   void _showSuccessDialog(ScanResultModel result) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final months = ['Jan','Feb','Mar','Apr','May','Jun',
-                    'Jul','Aug','Sep','Oct','Nov','Dec'];
     String timeStr = 'Just now';
     if (result.boardedAt != null) {
-      final t = result.boardedAt!.toLocal();
-      timeStr = '${t.day} ${months[t.month - 1]}  '
-          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+      timeStr = _formatDateTime(result.boardedAt!);
     }
 
     showDialog(
@@ -208,6 +230,12 @@ class _DriverScanPageState extends State<DriverScanPage>
 
   void _showErrorDialog(String message) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isAlreadyScanned = message.toLowerCase().contains('already scanned') ||
+        message.toLowerCase().contains('already been scanned');
+
+    final title = isAlreadyScanned ? 'Ticket Already Scanned' : 'Scan Failed';
+    final dialogColor = isAlreadyScanned ? AppColors.warning : AppColors.error;
+    final dialogIcon = isAlreadyScanned ? Icons.warning_amber_rounded : Icons.cancel_rounded;
 
     showDialog(
       context: context,
@@ -224,19 +252,20 @@ class _DriverScanPageState extends State<DriverScanPage>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.12),
+                  color: dialogColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.cancel_rounded,
-                  color: AppColors.error,
+                child: Icon(
+                  dialogIcon,
+                  color: dialogColor,
                   size: 56,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Scan Failed',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               Text(
@@ -256,7 +285,7 @@ class _DriverScanPageState extends State<DriverScanPage>
                     _scannerController.start();
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.error,
+                    backgroundColor: dialogColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
