@@ -6,6 +6,7 @@ class ScanResultModel {
   final String bookingStatus;
   final bool isPaid;
   final DateTime? boardedAt;
+  final bool isAlreadyScanned;
 
   const ScanResultModel({
     required this.passengerName,
@@ -15,6 +16,7 @@ class ScanResultModel {
     required this.bookingStatus,
     required this.isPaid,
     this.boardedAt,
+    this.isAlreadyScanned = false,
   });
 
   factory ScanResultModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class ScanResultModel {
       boardedAt: json['boarded_at'] != null
           ? DateTime.tryParse(json['boarded_at'] as String)
           : null,
+      isAlreadyScanned: json['is_already_scanned'] as bool? ?? false,
     );
   }
 }

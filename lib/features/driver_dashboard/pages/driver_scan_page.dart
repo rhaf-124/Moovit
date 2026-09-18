@@ -151,6 +151,12 @@ class _DriverScanPageState extends State<DriverScanPage>
       timeStr = _formatDateTime(result.boardedAt!);
     }
 
+    final isRescan = result.isAlreadyScanned;
+    final title = isRescan ? 'Ticket Already Scanned' : 'Ticket Validated!';
+    final dialogColor = isRescan ? AppColors.warning : AppColors.success;
+    final dialogIcon = isRescan ? Icons.info_rounded : Icons.check_circle_rounded;
+    final subtitle = isRescan ? 'Scanned At $timeStr' : (result.seatNumber.isNotEmpty ? 'Seat ${result.seatNumber}' : null);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -166,24 +172,24 @@ class _DriverScanPageState extends State<DriverScanPage>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.12),
+                  color: dialogColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.check_circle_rounded,
-                  color: AppColors.success,
+                child: Icon(
+                  dialogIcon,
+                  color: dialogColor,
                   size: 56,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Ticket Validated!',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
-              if (result.seatNumber.isNotEmpty)
+              if (subtitle != null)
                 Text(
-                  'Seat ${result.seatNumber}',
+                  subtitle,
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? Colors.white70 : Colors.black54,
@@ -209,7 +215,7 @@ class _DriverScanPageState extends State<DriverScanPage>
                     _scannerController.start();
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: dialogColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
